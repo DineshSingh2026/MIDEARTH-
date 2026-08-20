@@ -40,13 +40,14 @@ const { density = "normal", packets = true } = Astro.props;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.6;
-    /* fades at the edges, so the field reads as curving away */
-    -webkit-mask-image: radial-gradient(ellipse 82% 74% at 50% 45%, #000 15%, transparent 76%);
-    mask-image: radial-gradient(ellipse 82% 74% at 50% 45%, #000 15%, transparent 76%);
+    opacity: 0.95;
+    /* fades at the edges, so the field reads as curving away — but far wider
+       than before, which was masking most of the board out of existence */
+    -webkit-mask-image: radial-gradient(ellipse 98% 92% at 50% 45%, #000 40%, transparent 92%);
+    mask-image: radial-gradient(ellipse 98% 92% at 50% 45%, #000 40%, transparent 92%);
   }
   .circuitry.low {
-    opacity: 0.34;
+    opacity: 0.6;
   }
   canvas {
     display: block;
@@ -55,10 +56,10 @@ const { density = "normal", packets = true } = Astro.props;
   }
   /* the same traces need less presence on a light ground */
   :global(html[data-theme="light"]) .circuitry {
-    opacity: 0.42;
+    opacity: 0.6;
   }
   :global(html[data-theme="light"]) .circuitry.low {
-    opacity: 0.24;
+    opacity: 0.38;
   }
 </style>
 
@@ -103,8 +104,8 @@ const { density = "normal", packets = true } = Astro.props;
 
       function buildTraces() {
         var pitch = 26;
-        var target = Math.round((W * H) / 42000);
-        var count = Math.max(8, Math.min(lowPower ? 14 : 38, target));
+        var target = Math.round((W * H) / 26000);
+        var count = Math.max(14, Math.min(lowPower ? 18 : 58, target));
         traces = [];
 
         for (var i = 0; i < count; i++) {
@@ -136,7 +137,11 @@ const { density = "normal", packets = true } = Astro.props;
             cum.push(total);
           }
           if (total < pitch) continue;
-          traces.push({ pts: pts, cum: cum, len: total, flash: 0 });
+          traces.push({
+            pts: pts, cum: cum, len: total, flash: 0,
+            // roughly a third of the pads idle-blink, like status LEDs on a rack
+            blink: Math.random() < 0.34 ? Math.random() * 6.28 : -1,
+          });
         }
       }
 
@@ -160,15 +165,15 @@ const { density = "normal", packets = true } = Astro.props;
 
         for (var i = 0; i < traces.length; i++) {
           var tr = traces[i];
-          bctx.strokeStyle = rgba(AGENT, 0.3);
-          bctx.lineWidth = 1.1;
+          bctx.strokeStyle = rgba(AGENT, 0.5);
+          bctx.lineWidth = 1.3;
           bctx.beginPath();
           bctx.moveTo(tr.pts[0].x, tr.pts[0].y);
           for (var p = 1; p < tr.pts.length; p++) bctx.lineTo(tr.pts[p].x, tr.pts[p].y);
           bctx.stroke();
 
           for (var v = 1; v < tr.pts.length - 1; v++) {
-            bctx.fillStyle = rgba(AGENT, 0.34);
+            bctx.fillStyle = rgba(AGENT, 0.55);
             bctx.beginPath();
             bctx.arc(tr.pts[v].x, tr.pts[v].y, 1.5, 0, Math.PI * 2);
             bctx.fill();
@@ -177,10 +182,10 @@ const { density = "normal", packets = true } = Astro.props;
           var ends = [tr.pts[0], tr.pts[tr.pts.length - 1]];
           for (var e = 0; e < 2; e++) {
             var pd = ends[e];
-            bctx.fillStyle = rgba(AGENT, 0.16);
+            bctx.fillStyle = rgba(AGENT, 0.3);
             bctx.fillRect(pd.x - 3.5, pd.y - 3.5, 7, 7);
-            bctx.strokeStyle = rgba(AGENT, 0.55);
-            bctx.lineWidth = 1;
+            bctx.strokeStyle = rgba(AGENT, 0.85);
+            bctx.lineWidth = 1.1;
             bctx.strokeRect(pd.x - 3.5, pd.y - 3.5, 7, 7);
           }
         }
@@ -213,9 +218,9 @@ const { density = "normal", packets = true } = Astro.props;
       function step(dt) {
         if (wantPulses) {
           spawnIn -= dt;
-          if (spawnIn <= 0 && pulses.length < (lowPower ? 3 : 9)) {
+          if (spawnIn <= 0 && pulses.length < (lowPower ? 4 : 14)) {
             spawn();
-            spawnIn = 0.5 + Math.random() * 0.9;
+            spawnIn = 0.25 + Math.random() * 0.5;
           }
         }
         for (var i = pulses.length - 1; i >= 0; i--) {
@@ -231,9 +236,19 @@ const { density = "normal", packets = true } = Astro.props;
         }
       }
 
-      function draw() {
+      function draw(time) {
         ctx.clearRect(0, 0, W, H);
         ctx.drawImage(base, 0, 0, W, H);
+
+        // idle status lights, so the board is alive between pulses
+        for (var q = 0; q < traces.length; q++) {
+          var tb = traces[q];
+          if (tb.blink < 0 || tb.flash > 0) continue;
+          var pdb = tb.pts[tb.pts.length - 1];
+          var bl = 0.5 + 0.5 * Math.sin(time / 620 + tb.blink);
+          ctx.fillStyle = rgba(AGENT_HOT, 0.18 + bl * 0.5);
+          ctx.fillRect(pdb.x - 2, pdb.y - 2, 4, 4);
+        }
 
         // a pad that just received a pulse
         for (var t = 0; t < traces.length; t++) {
@@ -282,7 +297,7 @@ const { density = "normal", packets = true } = Astro.props;
 
       if (!layout()) {
         window.addEventListener("load", function () {
-          if (layout()) draw();
+          if (layout()) draw(0);
         });
         return;
       }
@@ -292,7 +307,7 @@ const { density = "normal", packets = true } = Astro.props;
         for (var i = 0; i < Math.min(4, traces.length); i++) {
           pulses.push({ tr: traces[i * 2 % traces.length], s: traces[i * 2 % traces.length].len * 0.55, sp: 0 });
         }
-        draw();
+        draw(0);
         return;
       }
 
@@ -319,7 +334,7 @@ const { density = "normal", packets = true } = Astro.props;
         var dt = Math.min((t - last) / 1000, 0.05);
         last = t;
         step(dt);
-        draw();
+        draw(t);
       }
       raf = requestAnimationFrame(frame);
     });

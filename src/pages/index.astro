@@ -70,6 +70,7 @@ const ownerCan = [
   <section class="hero ground-void has-atmos">
     <Atmos horizon={true} beam={true} />
     <Circuitry />
+    <div class="hero-scrim" aria-hidden="true"></div>
 
     <div class="wrap-wide hero-in">
       <!-- top rail: this page is an instrument, and it says so -->
@@ -368,6 +369,34 @@ const ownerCan = [
     width: 100%;
   }
 
+  /* The board is meant to be seen, but not through the sentences. A
+     directional scrim keeps the copy column crisp and leaves the right side
+     of the frame open — the same device the String site uses over its hero
+     canvas, and it makes the composition asymmetric rather than flat. */
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      var(--color-void) 0%,
+      color-mix(in srgb, var(--color-void) 90%, transparent) 24%,
+      color-mix(in srgb, var(--color-void) 50%, transparent) 46%,
+      transparent 66%
+    );
+  }
+  @media (max-width: 1100px) {
+    /* stacked layout: the copy runs full width, so the scrim has to too */
+    .hero-scrim {
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-void) 45%, transparent) 0%,
+        color-mix(in srgb, var(--color-void) 88%, transparent) 55%,
+        var(--color-void) 100%
+      );
+    }
+  }
+
   .hero-rail {
     display: flex;
     align-items: center;
@@ -442,7 +471,9 @@ const ownerCan = [
     border-bottom: 1px solid var(--color-rule);
   }
   .facts dt {
-    color: var(--color-paper-faint);
+    /* these sit on the open side of the scrim, over live traces, so they
+       need a step more contrast than a label normally would */
+    color: var(--color-paper-dim);
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-size: 0.64rem;
@@ -471,6 +502,7 @@ const ownerCan = [
 
   /* =========================================================== agent loop */
   .steps {
+    position: relative;
     list-style: none;
     margin: 0 0 clamp(2rem, 4vw, 3rem);
     padding: 0;
@@ -479,6 +511,41 @@ const ownerCan = [
     /* the connecting rail every step hangs from */
     border-top: 1px solid var(--color-rule-hot);
   }
+  /* The rail is the sequence, so a pulse runs it in order — the same
+     language as the circuit field behind it. */
+  .steps::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    height: 1px;
+    width: 20%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-signal),
+      transparent
+    );
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-signal) 80%, transparent);
+    animation: railrun 6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes railrun {
+    0% {
+      left: -22%;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      left: 100%;
+      opacity: 0;
+    }
+  }
+
   .steps li {
     position: relative;
     padding: 1.9rem 1.15rem 1.7rem;
@@ -683,8 +750,12 @@ const ownerCan = [
     stroke-dasharray: 3 3;
     opacity: 0.55;
   }
+  /* the route an agent takes is always live, just slower until you look */
+  .vz-path {
+    animation: dash 3.4s linear infinite;
+  }
   .game:hover .vz-path {
-    animation: dash 1.6s linear infinite;
+    animation-duration: 1.4s;
   }
   @keyframes dash {
     to {
