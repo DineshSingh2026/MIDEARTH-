@@ -61,7 +61,7 @@ const bodyClass =
         try {
           t = localStorage.getItem("midearth:theme");
         } catch (e) {}
-        if (t !== "light" && t !== "dark" && t !== "ember") {
+        if (t !== "light" && t !== "dark" && t !== "ember" && t !== "circuit") {
           t =
             window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: light)").matches
@@ -70,7 +70,7 @@ const bodyClass =
         }
         document.documentElement.setAttribute("data-theme", t);
         var m = document.getElementById("theme-color");
-        var bar = { dark: "#050506", light: "#fdfdfc", ember: "#06070a" };
+        var bar = { dark: "#050506", light: "#fdfdfc", ember: "#06070a", circuit: "#020405" };
         if (m) m.setAttribute("content", bar[t] || bar.dark);
 
         // Cold-open: decided here, before first paint, so the overlay is up

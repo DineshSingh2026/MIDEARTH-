@@ -284,6 +284,72 @@ html[data-theme="ember"] .btn-solid.on-agent {
   color: #fff;
 }
 
+/* =============================== circuit theme ==========================
+   Taken from the circuit-globe artwork. The lesson of that image is not the
+   green — it is that everything structural is METAL and colour appears only
+   where there is light. Chrome traces carry the composition; the emerald is
+   a couple of percent of the pixels at near-maximum saturation.
+
+   So here the agent role is brushed chrome rather than a hue, and the live
+   role is one electric emerald. That is the same formula as a monochrome
+   palette with a single accent — the difference from the red version is that
+   emerald agrees with the blue-green logo instead of fighting it.
+   ======================================================================== */
+
+html[data-theme="circuit"] {
+  color-scheme: dark;
+
+  --color-void: #020405;
+  --color-deck: #06090b;
+  --color-deck-raise: #0c1114;
+  --color-deck-high: #131a1e;
+  --color-glass: #0a1013;
+  --color-stands: #e9edec;
+  --color-stands-raise: #f4f7f6;
+  --color-stands-deep: #d5dbda;
+
+  /* the machine, as brushed chrome */
+  --color-agent: #9fb2bd;
+  --color-agent-hot: #d7e3ea;
+  --color-agent-deep: #4a5a64;
+
+  /* the only real hue on the page */
+  --color-signal: #00e58c;
+  --color-signal-hot: #6bffc2;
+  --color-signal-deep: #067a4b;
+
+  --color-brand-blue: #6e8a99;
+  --color-brand-lime: #00ffa3;
+
+  --color-ink: #05090a;
+  --color-ink-dim: #4e5a5e;
+  --color-ink-faint: #7f8c90;
+  --color-paper: #dfe9ec;
+  --color-paper-dim: #8b9aa1;
+  --color-paper-faint: #57666d;
+
+  --color-rule: #12191d;
+  --color-rule-hot: #1e282e;
+  --color-rule-light: #cbd4d3;
+  --color-rule-light-hot: #b0bab9;
+}
+
+/* Chrome lighting up into emerald — the traces on the globe, as a ramp. */
+html[data-theme="circuit"] {
+  --grad-brand: linear-gradient(
+    100deg,
+    var(--color-agent-deep),
+    var(--color-agent) 28%,
+    var(--color-signal) 76%,
+    var(--color-brand-lime)
+  );
+  --grad-brand-soft: linear-gradient(
+    100deg,
+    var(--color-agent) 5%,
+    var(--color-signal) 95%
+  );
+}
+
 /* ------------------------------- base ----------------------------------- */
 
 * {

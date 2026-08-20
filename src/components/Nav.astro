@@ -307,7 +307,7 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
     background: var(--grad-brand-soft);
   }
   .theme-name {
-    min-width: 3.1rem;
+    min-width: 3.7rem;
     text-align: left;
   }
 
@@ -474,8 +474,8 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
 
     // Theme control. The resolver in Base.astro has already set data-theme,
     // so this only ever cycles and stores an explicit choice.
-    var THEMES = ["dark", "light", "ember"];
-    var META = { dark: "#050506", light: "#fdfdfc", ember: "#06070a" };
+    var THEMES = ["dark", "light", "ember", "circuit"];
+    var META = { dark: "#050506", light: "#fdfdfc", ember: "#06070a", circuit: "#020405" };
     var themeBtn = document.querySelector("[data-theme-toggle]");
     if (themeBtn) {
       var nameEl = themeBtn.querySelector("[data-theme-name]");

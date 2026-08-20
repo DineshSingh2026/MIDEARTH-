@@ -57,10 +57,21 @@ Two roles resolve per ground, so they stay legible on both: `--strong` (full-con
 text — white on the deck, ink on the stands) and `--signal-fg` (the live hue, stepped
 darker on the stands where the bright value fails contrast as small text).
 
-### Three themes
+### Four themes
 
-`dark` (default) · `light` · `ember`. The control in the nav names the current one and
-cycles; three palettes is one too many for an icon to communicate.
+`dark` (default) · `light` · `ember` · `circuit`. The control in the nav names the
+current one and cycles; more than two palettes is more than an icon can communicate.
+
+**Circuit** comes from the circuit-globe artwork. The lesson of that image is not the
+green — it is that **everything structural is metal and colour appears only where there
+is light**. Chrome traces carry the whole composition; the emerald is a couple of percent
+of the pixels at near-maximum saturation. So here the agent role is brushed chrome rather
+than a hue, and the live role is one electric emerald `#00E58C`. `--grad-brand` runs
+silver → emerald: a trace lighting up.
+
+That is structurally the same formula as the monochrome-plus-one-hue palette that was
+rejected earlier. The difference is that emerald agrees with the blue-green logo where
+red fought it — the hue's relationship to the mark is what decides it, not the formula.
 
 **Ember** is taken from the String Fintech design system — the same owner's other
 product — so the two sites share a family resemblance. The mapping is not arbitrary:
