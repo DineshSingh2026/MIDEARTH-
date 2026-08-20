@@ -195,7 +195,6 @@ import { LAND, REGIONS, HUB } from "../data/world";
     function finish() {
       if (done) return;
       done = true;
-      try { sessionStorage.setItem("midearth:intro", "1"); } catch (e) {}
       root.classList.add("out");
       setTimeout(function () {
         document.documentElement.removeAttribute("data-intro");

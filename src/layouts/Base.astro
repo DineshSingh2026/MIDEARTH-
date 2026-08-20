@@ -76,11 +76,17 @@ const bodyClass =
         // Cold-open: decided here, before first paint, so the overlay is up
         // from the very first frame instead of flashing the page first.
         //
-        // Default is once per session, so it never replays on navigation —
-        // but sessionStorage survives reloads, which makes it impossible to
-        // show on demand. ?intro=1 replays it, ?intro=0 suppresses it.
-        // Reduced motion still wins over both: an explicit link should not
-        // force five seconds of animation on someone who asked for none.
+        // Plays on every load of the HOME page, and only the home page — the
+        // landing moment is the one place a five-second title sequence earns
+        // its time, and interior pages must never make you sit through it.
+        //
+        // It deliberately does NOT gate on sessionStorage. That gate made the
+        // intro unshowable: the flag survives reloads and only clears when the
+        // tab closes, so after one view the same tab never saw it again.
+        //
+        //   ?intro=1  force it on any page
+        //   ?intro=0  suppress it
+        // Reduced motion overrides both.
         var force = null;
         try {
           force = new URLSearchParams(location.search).get("intro");
@@ -89,8 +95,8 @@ const bodyClass =
           var rm =
             window.matchMedia &&
             window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          var seen = sessionStorage.getItem("midearth:intro");
-          var play = force === "1" ? true : force === "0" ? false : !seen;
+          var home = location.pathname === "/" || location.pathname === "/index.html";
+          var play = force === "1" ? true : force === "0" ? false : home;
           if (play && !rm) document.documentElement.setAttribute("data-intro", "1");
         } catch (e) {}
       })();
