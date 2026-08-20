@@ -5,6 +5,7 @@ import Doors from "../components/Doors.astro";
 import Ticker from "../components/Ticker.astro";
 import Atmos from "../components/Atmos.astro";
 import Swarm from "../components/Swarm.astro";
+import Network from "../components/Network.astro";
 import { games } from "../data/games";
 
 const agentLoop = [
@@ -302,13 +303,16 @@ const ownerCan = [
     </div>
   </section>
 
+  <!-- ============================================================= network -->
+  <Network />
+
   <!-- =========================================================== guarantee -->
   <section class="ground-void band guarantee has-atmos" aria-labelledby="trust-h">
     <Atmos horizon={true} beam={true} />
     <Swarm density="low" packets={false} />
 
     <div class="wrap-wide">
-      <p class="band-index"><b>04</b> the guarantee</p>
+      <p class="band-index"><b>05</b> the guarantee</p>
 
       <h2 id="trust-h" class="display display-xl trust">
         <span class="line-mask"><span>An owner cannot move</span></span>

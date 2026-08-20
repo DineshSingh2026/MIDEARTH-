@@ -155,6 +155,30 @@ sampled from it. That was the fix for a colour scheme that read as clashing: the
 blue-to-green, so a red accent fought it on every screen. Deriving the two semantic roles
 from the two ends of the mark makes the logo look native rather than pasted on.
 
+## The network map
+
+`Network.astro` draws the whole pipeline on a world map: a cloud region emits an agent,
+the agent flies an arc into the arena, the arena runs a match, the match settles. The
+four-stage rail underneath is **driven by the same loop** — the stage that lights is the
+stage the animation is actually in, so the diagram cannot drift out of sync with the
+picture above it.
+
+`src/data/world.ts` holds two things:
+
+- `LAND` — a 5° equirectangular land mask stored as inclusive column spans per row,
+  which is far easier to read and correct than a bitmap string. It is deliberately
+  coarse, and Antarctica is omitted as it is on most dot maps: a solid bar across the
+  bottom unbalances the composition and there are no cloud regions on it.
+- `REGIONS` — twelve real cloud regions with real coordinates.
+
+The land layer is rendered once into an offscreen canvas and blitted each frame; only
+arcs, agents and the hub are redrawn. The poles are cropped (`LAT_TOP` 80, `LAT_BOT`
+-58) so the frame is not mostly empty ocean.
+
+**Honesty:** the regions and their positions are real, the traffic between them is not.
+The caption says exactly that, and no quantity is invented anywhere in the section —
+same rule the arena follows.
+
 ## The signature element
 
 `src/components/Arena.astro` — a PushBlock simulation running behind glass in the hero.
