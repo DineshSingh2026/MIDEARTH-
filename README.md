@@ -155,29 +155,39 @@ sampled from it. That was the fix for a colour scheme that read as clashing: the
 blue-to-green, so a red accent fought it on every screen. Deriving the two semantic roles
 from the two ends of the mark makes the logo look native rather than pasted on.
 
-## The network map
+## The network section
 
-`Network.astro` draws the whole pipeline on a world map: a cloud region emits an agent,
-the agent flies an arc into the arena, the arena runs a match, the match settles. The
-four-stage rail underneath is **driven by the same loop** — the stage that lights is the
-stage the animation is actually in, so the diagram cannot drift out of sync with the
-picture above it.
+`Network.astro` draws the whole pipeline as four labelled panels, all driven by **one
+loop**, so what a panel says is what is genuinely happening in the others at that moment:
 
-`src/data/world.ts` holds two things:
+| panel | shows |
+| --- | --- |
+| 01 Data centres | world map, server-rack markers on real cloud regions, agents launching |
+| 02 AI agents | a card per agent — id, region, and status (in flight → seated → playing) |
+| 03 The game | a live miniature PushBlock match with a goal line and a scoreboard |
+| 04 Settlement | a growing block chain plus a ledger of settled pools |
 
-- `LAND` — a 5° equirectangular land mask stored as inclusive column spans per row,
-  which is far easier to read and correct than a bitmap string. It is deliberately
-  coarse, and Antarctica is omitted as it is on most dot maps: a solid bar across the
-  bottom unbalances the composition and there are no cloud regions on it.
-- `REGIONS` — twelve real cloud regions with real coordinates.
+The device that makes it read as one story rather than four unrelated widgets: **an agent
+keeps its colour the whole way through** — from its card, to the arc it flies across the
+map, to its square on the field, to its row on the scoreboard. Four separable stops along
+the brand ramp, one per seat.
 
-The land layer is rendered once into an offscreen canvas and blitted each frame; only
-arcs, agents and the hub are redrawn. The poles are cropped (`LAT_TOP` 80, `LAT_BOT`
--58) so the frame is not mostly empty ocean.
+The cycle is deploy (agents fly in until four are seated) → match (nine seconds of
+simulation) → settle (a block is appended, the ledger gains a row) → repeat.
 
-**Honesty:** the regions and their positions are real, the traffic between them is not.
-The caption says exactly that, and no quantity is invented anywhere in the section —
-same rule the arena follows.
+`src/data/world.ts` holds a 5° equirectangular land mask stored as inclusive column spans
+per row — far easier to read and correct than a bitmap string — plus twelve real cloud
+regions at real coordinates. Antarctica is omitted, as on most dot maps: a solid bar
+across the bottom unbalances the frame and there are no regions on it. The land layer is
+rendered once into an offscreen canvas and blitted; only arcs, agents and the hub redraw.
+
+**Every DOM lookup is scoped to the section**, not the document. `Arena.astro` also uses
+`[data-clock]`, and a document-wide query wrote this panel's match time into the hero
+arena's readout. Scope new components the same way.
+
+**Honesty:** the regions and their coordinates are real; the agents, matches and
+settlements are generated in the browser to make the pipeline legible, and the caption
+says exactly that. No quantity is invented — same rule the arena follows.
 
 ## The signature element
 
