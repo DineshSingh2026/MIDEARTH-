@@ -221,6 +221,11 @@ A splash screen that gets stuck is worse than no splash screen, so:
   it — so no JS means no overlay, and the page is simply there.
 - Deciding in the head (not on load) is what stops the page flashing before it covers.
 - Once per session, via `sessionStorage`. Never on repeat navigation.
+- **`?intro=1` replays it, `?intro=0` suppresses it.** `sessionStorage` survives page
+  reloads and only resets when the tab closes, so without this flag the intro is
+  impossible to show on demand — which makes it impossible to demo. Reduced motion
+  still overrides both: an explicit link should not force five seconds of animation on
+  someone who asked for none.
 - Skipped entirely under `prefers-reduced-motion`.
 - Dismissable by click, Esc, space, or the skip button.
 - A hard 8-second failsafe removes it regardless of what else happened.

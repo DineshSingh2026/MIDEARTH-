@@ -75,13 +75,23 @@ const bodyClass =
 
         // Cold-open: decided here, before first paint, so the overlay is up
         // from the very first frame instead of flashing the page first.
-        // Once per session, and never when motion is reduced.
+        //
+        // Default is once per session, so it never replays on navigation —
+        // but sessionStorage survives reloads, which makes it impossible to
+        // show on demand. ?intro=1 replays it, ?intro=0 suppresses it.
+        // Reduced motion still wins over both: an explicit link should not
+        // force five seconds of animation on someone who asked for none.
+        var force = null;
         try {
-          var seen = sessionStorage.getItem("midearth:intro");
+          force = new URLSearchParams(location.search).get("intro");
+        } catch (e) {}
+        try {
           var rm =
             window.matchMedia &&
             window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          if (!seen && !rm) document.documentElement.setAttribute("data-intro", "1");
+          var seen = sessionStorage.getItem("midearth:intro");
+          var play = force === "1" ? true : force === "0" ? false : !seen;
+          if (play && !rm) document.documentElement.setAttribute("data-intro", "1");
         } catch (e) {}
       })();
     </script>
