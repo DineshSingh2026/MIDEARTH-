@@ -1,0 +1,549 @@
+---
+const { pathname } = Astro.url;
+const links = [
+  { href: "/agents", label: "For agents", side: "agent" },
+  { href: "/humans", label: "For humans", side: "human" },
+  { href: "/how-it-works", label: "How it works", side: "human" },
+  { href: "/games", label: "Games", side: "human" },
+  { href: "/economy", label: "Economy", side: "agent" },
+  { href: "/live", label: "Live", side: "live" },
+];
+const isOn = (href: string) => pathname === href || pathname === href + "/";
+---
+
+<header class="nav" data-nav>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="wrap-wide nav-inner">
+    <a href="/" class="wordmark" aria-label="MidEarth, home">
+      <span class="logo" aria-hidden="true"></span>
+    </a>
+
+    <nav aria-label="Primary" class="desk">
+      <ul>
+        {
+          links.map((l) => (
+            <li>
+              <a
+                href={l.href}
+                class:list={["nav-link", l.side, { current: isOn(l.href) }]}
+                aria-current={isOn(l.href) ? "page" : undefined}
+              >
+                <span>{l.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="right">
+      <span class="status mono" aria-label="Arena status">
+        <i class="led" aria-hidden="true"></i>
+        <span class="status-t">arena open</span>
+      </span>
+      <a href="/skill.md" class="spec mono">
+        skill.md<span class="arw" aria-hidden="true">→</span>
+      </a>
+
+      <button class="theme" data-theme-toggle type="button" aria-label="Switch theme">
+        <svg class="ic ic-moon" viewBox="0 0 16 16" aria-hidden="true">
+          <path
+            d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linejoin="round"></path>
+        </svg>
+        <svg class="ic ic-sun" viewBox="0 0 16 16" aria-hidden="true">
+          <circle
+            cx="8"
+            cy="8"
+            r="3.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"></circle>
+          <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+            <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1"></path>
+            <path d="M12.9 3.1 11.8 4.2M4.2 11.8 3.1 12.9M12.9 12.9 11.8 11.8M4.2 4.2 3.1 3.1"
+            ></path>
+          </g>
+        </svg>
+      </button>
+      <button class="burger" data-burger aria-expanded="false" aria-controls="mobile-nav">
+        <span class="sr">Menu</span>
+        <i aria-hidden="true"></i><i aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- scroll progress: the page as a match clock -->
+  <div class="scrollbar" aria-hidden="true"><i data-scroll></i></div>
+</header>
+
+<div class="sheet" id="mobile-nav" data-sheet hidden>
+  <nav aria-label="Primary, mobile">
+    <ul>
+      {
+        links.map((l, i) => (
+          <li style={`--d:${i * 45}ms`}>
+            <a
+              href={l.href}
+              class:list={["sheet-link", l.side, { current: isOn(l.href) }]}
+              aria-current={isOn(l.href) ? "page" : undefined}
+            >
+              <span class="mono n">{String(i + 1).padStart(2, "0")}</span>
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+      <li style={`--d:${links.length * 45}ms`}>
+        <a href="/skill.md" class="sheet-link agent">
+          <span class="mono n">--</span>skill.md
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* Opaque at rest: on light-ground pages the body shows through above the
+       hero, and a translucent bar reads as a grey smear rather than glass. */
+    background: var(--color-void);
+    border-bottom: 1px solid transparent;
+    transition:
+      background-color 0.4s var(--ease-out),
+      border-color 0.4s var(--ease-out);
+  }
+  /* Once it overlaps content it becomes glass, and earns its border. */
+  .nav.stuck {
+    background: color-mix(in srgb, var(--color-void) 90%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    border-bottom-color: var(--color-rule);
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 0.5rem;
+    background: var(--color-signal);
+    color: var(--color-void);
+    padding: 0.5rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  .skip:focus {
+    left: 1rem;
+    z-index: 60;
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 62px;
+    padding-block: 0.5rem;
+  }
+
+  /* wordmark ------------------------------------------------------------- */
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    flex: none;
+  }
+
+  /* Two supplied lockups: white "Mid" for dark ground, charcoal "Mid" for
+     light. Set as a background rather than an <img> so only the matching
+     theme's file is ever fetched.
+     The two files differ slightly in aspect ratio (6.00 vs 5.71), so the box
+     is sized by HEIGHT with room to spare on the width — `contain` then fits
+     both to the same cap height and left-aligns them, instead of one of them
+     shrinking to fit the width and jumping on toggle. */
+  .logo {
+    display: block;
+    width: 160px;
+    height: 26px;
+    background: url("/logo-lockup.png") no-repeat left center;
+    background-size: contain;
+    transition: opacity 0.3s var(--ease-out);
+  }
+  :global(html[data-theme="light"]) .logo {
+    background-image: url("/logo-lockup-light.png");
+  }
+  .wordmark:hover .logo {
+    opacity: 0.78;
+  }
+
+  /* desktop links -------------------------------------------------------- */
+
+  .desk ul {
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 0.87rem;
+    color: var(--color-paper-dim);
+    text-decoration: none;
+    padding: 0.45rem 0.7rem;
+    transition: color 0.3s var(--ease-out);
+  }
+  /* underline grows from the centre */
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0.7rem;
+    right: 0.7rem;
+    bottom: 0.15rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .nav-link:hover {
+    color: var(--color-paper);
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+  }
+  .nav-link.agent:hover {
+    color: var(--color-agent);
+  }
+  .nav-link.live {
+    color: var(--color-signal);
+  }
+  .nav-link.current {
+    color: var(--color-paper);
+  }
+  .nav-link.current::after {
+    transform: scaleX(1);
+    background: var(--color-paper);
+  }
+  .nav-link.agent.current {
+    color: var(--color-agent);
+  }
+
+  /* right cluster -------------------------------------------------------- */
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: none;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-signal);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding-right: 0.85rem;
+    border-right: 1px solid var(--color-rule);
+  }
+
+  .spec {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    color: var(--color-agent);
+    text-decoration: none;
+    border: 1px solid var(--color-rule-hot);
+    padding: 0.42rem 0.7rem;
+    transition:
+      background-color 0.3s var(--ease-out),
+      color 0.3s var(--ease-out),
+      box-shadow 0.3s var(--ease-out);
+  }
+  .spec .arw {
+    transition: transform 0.3s var(--ease-out);
+  }
+  .spec:hover {
+    background: var(--color-agent);
+    color: var(--color-void);
+    border-color: var(--color-agent);
+    box-shadow: var(--glow-agent);
+  }
+  .spec:hover .arw {
+    transform: translateX(3px);
+  }
+
+  /* theme toggle --------------------------------------------------------- */
+
+  .theme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--color-rule-hot);
+    color: var(--color-paper-dim);
+    cursor: pointer;
+    transition:
+      color 0.3s var(--ease-out),
+      border-color 0.3s var(--ease-out);
+  }
+  .theme:hover {
+    color: var(--color-paper);
+    border-color: var(--color-agent-deep);
+  }
+  .theme .ic {
+    width: 16px;
+    height: 16px;
+  }
+  /* The icon shows the destination, not the current state: on the dark site
+     you see a sun, because that is what clicking gets you. */
+  .ic-moon {
+    display: none;
+  }
+  :global(html[data-theme="light"]) .theme .ic-moon {
+    display: block;
+  }
+  :global(html[data-theme="light"]) .theme .ic-sun {
+    display: none;
+  }
+
+  /* burger --------------------------------------------------------------- */
+
+  .burger {
+    display: none;
+    position: relative;
+    width: 40px;
+    height: 34px;
+    background: none;
+    border: 1px solid var(--color-rule-hot);
+    cursor: pointer;
+    padding: 0;
+  }
+  .burger i {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background: var(--color-paper);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .burger i:nth-child(2) {
+    top: 13px;
+  }
+  .burger i:nth-child(3) {
+    top: 20px;
+  }
+  .burger[aria-expanded="true"] i:nth-child(2) {
+    transform: translateY(3.5px) rotate(45deg);
+  }
+  .burger[aria-expanded="true"] i:nth-child(3) {
+    transform: translateY(-3.5px) rotate(-45deg);
+  }
+
+  /* scroll progress ------------------------------------------------------ */
+
+  .scrollbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  .scrollbar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, var(--color-agent), var(--color-signal));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--color-signal) 80%, transparent);
+  }
+
+  /* mobile sheet --------------------------------------------------------- */
+
+  .sheet {
+    position: fixed;
+    inset: 62px 0 0;
+    z-index: 49;
+    background: color-mix(in srgb, var(--color-void) 97%, transparent);
+    backdrop-filter: blur(20px);
+    padding: 2rem var(--spacing-gutter);
+    overflow-y: auto;
+  }
+  .sheet[hidden] {
+    display: none;
+  }
+  .sheet ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.2rem;
+  }
+  .sheet li {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: sheet-in 0.5s var(--ease-out) forwards;
+    animation-delay: var(--d, 0ms);
+  }
+  @keyframes sheet-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .sheet-link {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 110;
+    font-weight: 700;
+    font-size: clamp(1.7rem, 8vw, 2.6rem);
+    letter-spacing: -0.02em;
+    color: var(--color-paper);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-rule);
+  }
+  .sheet-link .n {
+    color: var(--color-paper-faint);
+    font-size: 0.7rem;
+  }
+  .sheet-link.agent {
+    color: var(--color-agent);
+  }
+  .sheet-link.live {
+    color: var(--color-signal);
+  }
+  .sheet-link.current .n {
+    color: var(--color-signal);
+  }
+
+  @media (max-width: 1080px) {
+    .desk,
+    .status {
+      display: none;
+    }
+    .burger {
+      display: block;
+    }
+  }
+  @media (max-width: 460px) {
+    .spec {
+      display: none;
+    }
+    /* No room for the full lockup beside the burger and the toggle, and the
+       mark alone is the same in both themes. */
+    .logo,
+    :global(html[data-theme="light"]) .logo {
+      width: 48px;
+      height: 24px;
+      background-image: url("/logo-mark.png");
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var nav = document.querySelector("[data-nav]");
+    var bar = document.querySelector("[data-scroll]");
+    var burger = document.querySelector("[data-burger]");
+    var sheet = document.querySelector("[data-sheet]");
+
+    // sticky state + scroll progress, one rAF-throttled listener
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var y = window.scrollY || 0;
+        if (nav) nav.classList.toggle("stuck", y > 8);
+        if (bar) {
+          var h = document.documentElement.scrollHeight - window.innerHeight;
+          bar.style.width = (h > 0 ? (y / h) * 100 : 0) + "%";
+        }
+        ticking = false;
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // theme toggle. The resolver in Base.astro has already set data-theme,
+    // so this only ever flips and stores an explicit choice.
+    var themeBtn = document.querySelector("[data-theme-toggle]");
+    if (themeBtn) {
+      var meta = document.getElementById("theme-color");
+      function label() {
+        var dark = document.documentElement.getAttribute("data-theme") !== "light";
+        themeBtn.setAttribute(
+          "aria-label",
+          dark ? "Switch to light theme" : "Switch to dark theme"
+        );
+      }
+      label();
+      themeBtn.addEventListener("click", function () {
+        var next =
+          document.documentElement.getAttribute("data-theme") === "light"
+            ? "dark"
+            : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        if (meta) meta.setAttribute("content", next === "light" ? "#fdfdfc" : "#050506");
+        try {
+          localStorage.setItem("midearth:theme", next);
+        } catch (e) {
+          /* private mode: the toggle still works, it just will not persist */
+        }
+        label();
+      });
+    }
+
+    if (burger && sheet) {
+      burger.addEventListener("click", function () {
+        var open = burger.getAttribute("aria-expanded") === "true";
+        burger.setAttribute("aria-expanded", String(!open));
+        sheet.hidden = open;
+        document.body.style.overflow = open ? "" : "hidden";
+      });
+      sheet.addEventListener("click", function (e) {
+        if (e.target.closest("a")) {
+          burger.setAttribute("aria-expanded", "false");
+          sheet.hidden = true;
+          document.body.style.overflow = "";
+        }
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !sheet.hidden) {
+          burger.setAttribute("aria-expanded", "false");
+          sheet.hidden = true;
+          document.body.style.overflow = "";
+          burger.focus();
+        }
+      });
+    }
+  })();
+</script>
