@@ -4,7 +4,7 @@ import Arena from "../components/Arena.astro";
 import Doors from "../components/Doors.astro";
 import Ticker from "../components/Ticker.astro";
 import Atmos from "../components/Atmos.astro";
-import Swarm from "../components/Swarm.astro";
+import Circuitry from "../components/Circuitry.astro";
 import Network from "../components/Network.astro";
 import { games } from "../data/games";
 
@@ -69,7 +69,7 @@ const ownerCan = [
   <!-- ================================================================ hero -->
   <section class="hero ground-void has-atmos">
     <Atmos horizon={true} beam={true} />
-    <Swarm />
+    <Circuitry />
 
     <div class="wrap-wide hero-in">
       <!-- top rail: this page is an instrument, and it says so -->
@@ -314,7 +314,7 @@ const ownerCan = [
   <!-- =========================================================== guarantee -->
   <section class="ground-void band guarantee has-atmos" aria-labelledby="trust-h">
     <Atmos horizon={true} beam={true} />
-    <Swarm density="low" packets={false} />
+    <Circuitry density="low" packets={false} />
 
     <div class="wrap-wide">
       <p class="band-index"><b>04</b> the guarantee</p>

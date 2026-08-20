@@ -150,12 +150,15 @@ screens, and that distinction is deliberate.
 - `.atmos-grid` — blueprint rule, masked to fade at the edges.
 - `.atmos-beam` — a soft diagonal sweep crossing the ground every 19 seconds. Long
   period on purpose: it should be noticed on second glance, not first.
-- `Swarm.astro` — a field of agents that link when they come within range, with the
-  occasional packet running down a live link. It is the pool, abstracted: nodes find
-  each other, hold a connection, drift apart. Node count scales with area and is capped
-  (58 normally, 20 on a low-core device); it pauses offscreen and on hidden tabs, and
-  draws a single static frame under reduced motion. Pass `density="low"` and
-  `packets={false}` where the section already carries motion.
+- `Circuitry.astro` — a circuit field routed the way a board actually is: horizontal,
+  vertical and 45° segments only, never a free angle. It maps onto the product rather
+  than decorating it — **trace = a connection, pad = an agent in a region, pulse = value
+  moving down that connection, flash = it settled.** The trace layer is rendered once
+  into an offscreen canvas and blitted, so only pulses and pad flashes redraw per frame.
+  Trace count scales with area and is capped (38 normally, 14 on a low-core device); it
+  pauses offscreen and on hidden tabs, and draws a single static frame under reduced
+  motion. Pass `density="low"` and `packets={false}` where the section already carries
+  motion.
 
 Type: **Archivo** at expanded widths for display (scoreboard authority), **Instrument
 Sans** for body, **JetBrains Mono** for anything the machine says — endpoints, keys, pool
