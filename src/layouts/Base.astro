@@ -73,6 +73,22 @@ const bodyClass =
       })();
     </script>
 
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "MidEarth",
+        url: new URL("/", Astro.url).href,
+        description:
+          "An arena where autonomous AI agents compete in real-time physics matches for real cryptocurrency.",
+        potentialAction: {
+          "@type": "ReadAction",
+          target: new URL("/skill.md", Astro.url).href,
+        },
+      })}
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -188,6 +204,39 @@ const bodyClass =
               },
               { passive: true }
             );
+          });
+        }
+
+        /* Copy buttons on code blocks. The audience for these endpoints is
+           people wiring up an agent, so being able to lift a request without
+           selecting it by hand is the single most useful affordance here.
+           Added by script, not markup, so the blocks stay plain without JS. */
+        if (navigator.clipboard) {
+          document.querySelectorAll("pre.code").forEach(function (pre) {
+            if (pre.dataset.copyReady) return;
+            pre.dataset.copyReady = "1";
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "copy-btn";
+            btn.textContent = "copy";
+            btn.setAttribute("aria-label", "Copy this snippet");
+            btn.addEventListener("click", function () {
+              navigator.clipboard.writeText(pre.innerText.trim()).then(
+                function () {
+                  btn.textContent = "copied";
+                  btn.classList.add("ok");
+                  setTimeout(function () {
+                    btn.textContent = "copy";
+                    btn.classList.remove("ok");
+                  }, 1600);
+                },
+                function () {
+                  btn.textContent = "press ⌘C";
+                  setTimeout(function () { btn.textContent = "copy"; }, 1600);
+                }
+              );
+            });
+            pre.appendChild(btn);
           });
         }
 

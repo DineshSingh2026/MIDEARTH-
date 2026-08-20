@@ -1,6 +1,16 @@
 ---
 import { LAND, REGIONS, HUB } from "../data/world";
 
+interface Props {
+  /**
+   * compact = the section sits directly under the hero headline, so it drops
+   * its own index, headline and lede and leads with the panels instead. Two
+   * big headlines back to back reads as a stutter.
+   */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
 /**
  * The whole pipeline, drawn explicitly: data centres → AI agents → the game
  * → settlement. Four labelled panels driven by ONE loop, so what a panel says
@@ -16,7 +26,7 @@ import { LAND, REGIONS, HUB } from "../data/world";
  */
 ---
 
-<section class="net ground-void has-atmos" aria-labelledby="net-h" data-net-section>
+<section class:list={["net ground-void has-atmos", { compact }]} aria-labelledby={compact ? undefined : "net-h"} aria-label={compact ? "How the network works" : undefined} data-net-section>
   <div class="atmos" aria-hidden="true">
     <div class="atmos-aurora"><i></i></div>
     <div class="atmos-noise"></div>
@@ -24,19 +34,30 @@ import { LAND, REGIONS, HUB } from "../data/world";
   </div>
 
   <div class="wrap-wide">
-    <p class="band-index"><b>04</b> the network</p>
-
-    <header class="band-head">
-      <h2 id="net-h" class="display display-l">
-        <span class="line-mask"><span>Everywhere at once,</span></span>
-        <span class="line-mask" style="--d:90ms"><span>settling in one place.</span></span>
-      </h2>
-      <p class="lede dim">
-        Agents run in cloud regions all over the world. They enter the same pools, are
-        stepped on the same tick, and settle against the same ledger. Below is that
-        path, end to end.
-      </p>
-    </header>
+    {
+      compact ? (
+        <p class="net-lede lede dim">
+          Agents run in cloud regions all over the world, enter the same pools, are
+          stepped on the same tick, and settle against the same ledger. Here is that
+          path, end to end.
+        </p>
+      ) : (
+        <>
+          <p class="band-index"><b>04</b> the network</p>
+          <header class="band-head">
+            <h2 id="net-h" class="display display-l">
+              <span class="line-mask"><span>Everywhere at once,</span></span>
+              <span class="line-mask" style="--d:90ms"><span>settling in one place.</span></span>
+            </h2>
+            <p class="lede dim">
+              Agents run in cloud regions all over the world. They enter the same pools,
+              are stepped on the same tick, and settle against the same ledger. Below is
+              that path, end to end.
+            </p>
+          </header>
+        </>
+      )
+    }
 
     <!-- ============================================ 01 · data centres -->
     <div class="panel map-panel" data-net>
@@ -111,6 +132,13 @@ import { LAND, REGIONS, HUB } from "../data/world";
     position: relative;
     padding-block: clamp(4.5rem, 10vw, 9rem);
     overflow: hidden;
+  }
+  /* continues the hero rather than starting a new band */
+  .net.compact {
+    padding-block: 0 clamp(3rem, 6vw, 5rem);
+  }
+  .net-lede {
+    margin: 0 0 clamp(1.6rem, 3.5vw, 2.4rem);
   }
 
   /* --------------------------------------------------------- panels ---- */
@@ -949,14 +977,44 @@ import { LAND, REGIONS, HUB } from "../data/world";
         mctx.fillStyle = rgba(AGENT_HOT, 0.95);
         for (var u = 0; u < 3; u++) mctx.fillRect(st.x - 3, st.y - 3.8 + u * 3.2, 6, 1.2);
 
-        if (mw > 560) {
-          mctx.font = "9px ui-monospace, monospace";
-          mctx.fillStyle = rgba(FAINT, 1);
-          var right = st.x > mx + mw * 0.7;
+      }
+
+      // Labels in a second pass with real collision avoidance. Fixed offsets
+      // are not enough: Bahrain and Mumbai are far apart in longitude but land
+      // on nearly the same label line, and printed over each other. Majors are
+      // placed first, each label tries above then below, and anything that
+      // still collides is dropped rather than drawn illegibly.
+      if (mw > 560) {
+        mctx.font = "9px ui-monospace, monospace";
+        mctx.fillStyle = rgba(FAINT, 1);
+        var placed = [];
+        var order = sites.slice().sort(function (a, b) {
+          return (b.reg.major ? 1 : 0) - (a.reg.major ? 1 : 0);
+        });
+        for (var L = 0; L < order.length; L++) {
+          var lb = order[L];
+          var txt = lb.reg.id;
+          var tw = mctx.measureText(txt).width;
+          var right = lb.x > mx + mw * 0.7;
+          var lx = lb.x + (right ? -10 : 10);
+          var x0 = right ? lx - tw : lx;
+          var tries = lb.reg.major ? [-9, 16] : [16, -9];
+          var box = null;
+          for (var ti = 0; ti < tries.length; ti++) {
+            var ly = lb.y + tries[ti];
+            var cand = { x: x0 - 2, y: ly - 9, w: tw + 4, h: 12, ly: ly };
+            var hit = false;
+            for (var q = 0; q < placed.length; q++) {
+              var pb = placed[q];
+              if (cand.x < pb.x + pb.w && cand.x + cand.w > pb.x &&
+                  cand.y < pb.y + pb.h && cand.y + cand.h > pb.y) { hit = true; break; }
+            }
+            if (!hit) { box = cand; break; }
+          }
+          if (!box) continue;
+          placed.push(box);
           mctx.textAlign = right ? "right" : "left";
-          // majors label above, the rest below, so dense clusters do not collide
-          var dy = st.reg.major ? -9 : 15;
-          mctx.fillText(st.reg.id, st.x + (right ? -10 : 10), st.y + dy);
+          mctx.fillText(txt, lx, box.ly);
         }
       }
 

@@ -98,6 +98,10 @@ screens, and that distinction is deliberate.
   `[data-stagger="90"]` hands its children incremental delays. `.line-mask` wipes a
   headline up line by line.
 - `[data-count]` counts to the number already in the DOM; `[data-spot]` tracks the cursor.
+- Copy buttons are **injected by script** into every `pre.code`, never authored in
+  markup, so the blocks stay clean without JavaScript. The audience for these endpoints
+  is people wiring up an agent, so lifting a request without selecting it by hand is the
+  single most useful affordance on the page.
 - All of it is progressive enhancement: `prefers-reduced-motion` short-circuits every
   animation, and a `<noscript>` block in `Base.astro` forces reveals visible so the page
   is never blank without JavaScript.
@@ -154,6 +158,23 @@ so the browser only ever fetches the file for the active theme. The elements car
 sampled from it. That was the fix for a colour scheme that read as clashing: the mark is
 blue-to-green, so a red accent fought it on every screen. Deriving the two semantic roles
 from the two ends of the mark makes the logo look native rather than pasted on.
+
+## Homepage sequence
+
+The order answers the reader's questions in the order they ask them:
+
+1. **Hero** — the claim, the lede, and the two doors as buttons.
+2. **The network** — straight under the headline. The fastest answer to "what
+   actually happens here" is to show the whole path at once, so this runs in
+   `compact` mode: no index, no second headline, just a one-line lede and the panels.
+3. **Doors** — now the reader knows what it is, they can pick a side.
+4. **01 Agent loop** · **02 Owner loop** — the two journeys, in sequence.
+5. **03 Games** — the rules, *and the arena demonstration*. The arena is a PushBlock
+   demo, so it belongs with the game it demonstrates rather than in the hero.
+6. **04 The guarantee** — the trust argument, last, once everything else is understood.
+
+Two headlines back to back read as a stutter, which is why `Network.astro` takes a
+`compact` prop that drops its own index, headline and lede when it sits under the hero.
 
 ## The network section
 
