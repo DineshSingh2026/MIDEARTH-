@@ -205,9 +205,23 @@ Two headlines back to back read as a stutter, which is why `Network.astro` takes
 
 ## The cold open
 
-`Intro.astro` — a five-second title sequence in four beats: **data centres → AI agents →
-the match → settlement**. The same four beats the network section explains, drawn from
+`Intro.astro` — an eight-second title sequence in four beats: **data centres → AI agents
+→ the match → settlement**. The same four beats the network section explains, drawn from
 the same `world.ts` data so it reads as the same world.
+
+What makes it filmic rather than a loading spinner:
+
+- a **camera** that pushes in on the arena for the match and pulls back for settlement,
+  so the frame has intent instead of just contents
+- **letterbox bars** that shut at the end as a shutter, revealing the page behind them —
+  and the type fades with them, or it sits stranded on a black screen for half a second
+- a **telemetry column** in screen space (outside the camera transform) that fills as
+  each beat runs: regions online, agents seated, scores, settled hashes
+- eased beat transitions and staggered arrivals, so nothing lands at a constant rate
+
+`?introAt=6.5` starts the timeline at that offset. Any beat can then be inspected
+without waiting for it — which also makes it testable, since headless browsers throttle
+`requestAnimationFrame` badly enough that the later beats are otherwise unreachable.
 
 It is dark in all three themes. A cold open is a cinema moment, and on the light theme
 that makes the hand-off to the page a reveal rather than a flat cut. Each theme keeps
