@@ -46,29 +46,9 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
         skill.md<span class="arw" aria-hidden="true">→</span>
       </a>
 
-      <button class="theme" data-theme-toggle type="button" aria-label="Switch theme">
-        <svg class="ic ic-moon" viewBox="0 0 16 16" aria-hidden="true">
-          <path
-            d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8Z"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.2"
-            stroke-linejoin="round"></path>
-        </svg>
-        <svg class="ic ic-sun" viewBox="0 0 16 16" aria-hidden="true">
-          <circle
-            cx="8"
-            cy="8"
-            r="3.1"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.2"></circle>
-          <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-            <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1"></path>
-            <path d="M12.9 3.1 11.8 4.2M4.2 11.8 3.1 12.9M12.9 12.9 11.8 11.8M4.2 4.2 3.1 3.1"
-            ></path>
-          </g>
-        </svg>
+      <button class="theme mono" data-theme-toggle type="button">
+        <i class="sw" aria-hidden="true"></i>
+        <span class="theme-name" data-theme-name>dark</span>
       </button>
       <button class="burger" data-burger aria-expanded="false" aria-controls="mobile-nav">
         <span class="sr">Menu</span>
@@ -296,18 +276,22 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
 
   /* theme toggle --------------------------------------------------------- */
 
+  /* Three themes is one too many for an icon to communicate, so the control
+     names the current one and cycles. The swatch shows that theme's accent. */
   .theme {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
+    gap: 0.45rem;
     flex: none;
-    padding: 0;
+    padding: 0.42rem 0.7rem;
     background: none;
     border: 1px solid var(--color-rule-hot);
     color: var(--color-paper-dim);
     cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     transition:
       color 0.3s var(--ease-out),
       border-color 0.3s var(--ease-out);
@@ -316,20 +300,15 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
     color: var(--color-paper);
     border-color: var(--color-agent-deep);
   }
-  .theme .ic {
-    width: 16px;
-    height: 16px;
+  .theme .sw {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    background: var(--grad-brand-soft);
   }
-  /* The icon shows the destination, not the current state: on the dark site
-     you see a sun, because that is what clicking gets you. */
-  .ic-moon {
-    display: none;
-  }
-  :global(html[data-theme="light"]) .theme .ic-moon {
-    display: block;
-  }
-  :global(html[data-theme="light"]) .theme .ic-sun {
-    display: none;
+  .theme-name {
+    min-width: 3.1rem;
+    text-align: left;
   }
 
   /* burger --------------------------------------------------------------- */
@@ -493,32 +472,35 @@ const isOn = (href: string) => pathname === href || pathname === href + "/";
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    // theme toggle. The resolver in Base.astro has already set data-theme,
-    // so this only ever flips and stores an explicit choice.
+    // Theme control. The resolver in Base.astro has already set data-theme,
+    // so this only ever cycles and stores an explicit choice.
+    var THEMES = ["dark", "light", "ember"];
+    var META = { dark: "#050506", light: "#fdfdfc", ember: "#06070a" };
     var themeBtn = document.querySelector("[data-theme-toggle]");
     if (themeBtn) {
+      var nameEl = themeBtn.querySelector("[data-theme-name]");
       var meta = document.getElementById("theme-color");
-      function label() {
-        var dark = document.documentElement.getAttribute("data-theme") !== "light";
-        themeBtn.setAttribute(
-          "aria-label",
-          dark ? "Switch to light theme" : "Switch to dark theme"
-        );
+
+      function paint() {
+        var cur = document.documentElement.getAttribute("data-theme") || "dark";
+        if (nameEl) nameEl.textContent = cur;
+        var next = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+        themeBtn.setAttribute("aria-label", "Theme: " + cur + ". Switch to " + next + ".");
+        if (meta) meta.setAttribute("content", META[cur] || META.dark);
       }
-      label();
+      paint();
+
       themeBtn.addEventListener("click", function () {
-        var next =
-          document.documentElement.getAttribute("data-theme") === "light"
-            ? "dark"
-            : "light";
+        var cur = document.documentElement.getAttribute("data-theme") || "dark";
+        var i = THEMES.indexOf(cur);
+        var next = THEMES[(i < 0 ? 0 : i + 1) % THEMES.length];
         document.documentElement.setAttribute("data-theme", next);
-        if (meta) meta.setAttribute("content", next === "light" ? "#fdfdfc" : "#050506");
         try {
           localStorage.setItem("midearth:theme", next);
         } catch (e) {
-          /* private mode: the toggle still works, it just will not persist */
+          /* private mode: the control still works, it just will not persist */
         }
-        label();
+        paint();
       });
     }
 

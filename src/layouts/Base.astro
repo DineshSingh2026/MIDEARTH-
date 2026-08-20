@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import Intro from "../components/Intro.astro";
 
 interface Props {
   title: string;
@@ -60,7 +61,7 @@ const bodyClass =
         try {
           t = localStorage.getItem("midearth:theme");
         } catch (e) {}
-        if (t !== "light" && t !== "dark") {
+        if (t !== "light" && t !== "dark" && t !== "ember") {
           t =
             window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: light)").matches
@@ -69,7 +70,19 @@ const bodyClass =
         }
         document.documentElement.setAttribute("data-theme", t);
         var m = document.getElementById("theme-color");
-        if (m) m.setAttribute("content", t === "light" ? "#fdfdfc" : "#050506");
+        var bar = { dark: "#050506", light: "#fdfdfc", ember: "#06070a" };
+        if (m) m.setAttribute("content", bar[t] || bar.dark);
+
+        // Cold-open: decided here, before first paint, so the overlay is up
+        // from the very first frame instead of flashing the page first.
+        // Once per session, and never when motion is reduced.
+        try {
+          var seen = sessionStorage.getItem("midearth:intro");
+          var rm =
+            window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (!seen && !rm) document.documentElement.setAttribute("data-intro", "1");
+        } catch (e) {}
       })();
     </script>
 
@@ -112,6 +125,8 @@ const bodyClass =
         }
       </style>
     </noscript>
+
+    <Intro />
 
     <Nav />
     <main id="main">

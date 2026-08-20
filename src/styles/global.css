@@ -207,6 +207,83 @@ html[data-theme="light"] .glass-panel::before {
   );
 }
 
+/* ================================ ember theme ===========================
+   A third palette, taken from the String Fintech design system (the same
+   owner's other product), so the two sites share a family resemblance.
+
+   The mapping is not arbitrary: String names its blue `--machine`, which is
+   exactly this site's *agent* role, and its orange is the attention colour,
+   which is this site's *live* role. Same two-role structure, different hues.
+
+     String            ->  MidEarth
+     --machine #4C7DFF ->  --color-agent    (the agent's side of the glass)
+     --brand   #F44E04 ->  --color-signal   (live / in progress / on air)
+     --gold    #E8A33D ->  the warm end of the gradient ramp
+   ======================================================================== */
+
+html[data-theme="ember"] {
+  color-scheme: dark;
+
+  --color-void: #06070a;
+  --color-deck: #0a0c12;
+  --color-deck-raise: #0e1119;
+  --color-deck-high: #141822;
+  --color-glass: #11151d;
+  --color-stands: #e8e6e1;
+  --color-stands-raise: #f2f0ec;
+  --color-stands-deep: #d6d3cb;
+
+  --color-agent: #4c7dff;
+  --color-agent-hot: #8ba7ff;
+  --color-agent-deep: #24408f;
+
+  --color-signal: #f44e04;
+  --color-signal-hot: #ff8038;
+  --color-signal-deep: #8f2a00;
+
+  --color-brand-blue: #2b5bd7;
+  --color-brand-lime: #e8a33d;
+
+  --color-ink: #0c0d10;
+  --color-ink-dim: #55585f;
+  --color-ink-faint: #8a8d94;
+  --color-paper: #e8e6e1;
+  --color-paper-dim: #a6adba;
+  --color-paper-faint: #8e96a5;
+
+  --color-rule: #1a1d25;
+  --color-rule-hot: #262a34;
+  --color-rule-light: #cfccc5;
+  --color-rule-light-hot: #b7b3aa;
+}
+
+/* Blue and orange are opposite hues, so a gradient between them interpolates
+   through a muddy mauve — visible straight away on the hero's washed word.
+   String itself never ramps between them; it uses both as flat accents. So
+   ember's ramp stays on the warm side (orange → gold) and the blue remains a
+   flat accent, which is both cleaner and truer to the source system. */
+html[data-theme="ember"] {
+  --grad-brand: linear-gradient(
+    100deg,
+    var(--color-signal-deep),
+    var(--color-signal) 30%,
+    var(--color-signal-hot) 68%,
+    var(--color-brand-lime)
+  );
+  --grad-brand-soft: linear-gradient(
+    100deg,
+    var(--color-signal) 8%,
+    var(--color-signal-hot) 60%,
+    var(--color-brand-lime) 100%
+  );
+}
+
+/* Solid buttons sit on the orange end of that ramp, which needs light type. */
+html[data-theme="ember"] .btn-solid,
+html[data-theme="ember"] .btn-solid.on-agent {
+  color: #fff;
+}
+
 /* ------------------------------- base ----------------------------------- */
 
 * {

@@ -57,6 +57,33 @@ Two roles resolve per ground, so they stay legible on both: `--strong` (full-con
 text — white on the deck, ink on the stands) and `--signal-fg` (the live hue, stepped
 darker on the stands where the bright value fails contrast as small text).
 
+### Three themes
+
+`dark` (default) · `light` · `ember`. The control in the nav names the current one and
+cycles; three palettes is one too many for an icon to communicate.
+
+**Ember** is taken from the String Fintech design system — the same owner's other
+product — so the two sites share a family resemblance. The mapping is not arbitrary:
+String names its blue `--machine`, which is exactly this site's *agent* role, and its
+orange is the attention colour, which is this site's *live* role.
+
+| String | | MidEarth |
+| --- | --- | --- |
+| `--machine` `#4C7DFF` | → | `--color-agent` |
+| `--brand` `#F44E04` | → | `--color-signal` |
+| `--gold` `#E8A33D` | → | warm end of the gradient ramp |
+| `--ink` `#06070A` | → | `--color-void` |
+
+Only the **colour system** was taken, not the layout. MidEarth's structure is built
+around its own deck/stands concept and its own blue-green logo, and String's layout
+carries String's.
+
+One thing to know if you edit ember's ramp: blue and orange are opposite hues, so a
+gradient between them interpolates through a muddy mauve — it showed up immediately on
+the hero's washed word. String never ramps between them either; it uses both as flat
+accents. So ember's `--grad-brand` stays on the warm side (orange → gold) and the blue
+remains a flat accent.
+
 ### Dark and light
 
 Both themes ship. The concept does not invert — it re-lights. In light mode the agent's
@@ -175,6 +202,28 @@ The order answers the reader's questions in the order they ask them:
 
 Two headlines back to back read as a stutter, which is why `Network.astro` takes a
 `compact` prop that drops its own index, headline and lede when it sits under the hero.
+
+## The cold open
+
+`Intro.astro` — a five-second title sequence in four beats: **data centres → AI agents →
+the match → settlement**. The same four beats the network section explains, drawn from
+the same `world.ts` data so it reads as the same world.
+
+It is dark in all three themes. A cold open is a cinema moment, and on the light theme
+that makes the hand-off to the page a reveal rather than a flat cut. Each theme keeps
+its own accent pair, except `light`, whose accents are dark by design and would vanish
+on that ground — it borrows the dark theme's brighter pair.
+
+A splash screen that gets stuck is worse than no splash screen, so:
+
+- The overlay is `display:none` by default. A head script in `Base.astro` sets
+  `data-intro` on `<html>` **before first paint**, which is the only thing that reveals
+  it — so no JS means no overlay, and the page is simply there.
+- Deciding in the head (not on load) is what stops the page flashing before it covers.
+- Once per session, via `sessionStorage`. Never on repeat navigation.
+- Skipped entirely under `prefers-reduced-motion`.
+- Dismissable by click, Esc, space, or the skip button.
+- A hard 8-second failsafe removes it regardless of what else happened.
 
 ## The network section
 

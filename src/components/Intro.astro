@@ -1,0 +1,498 @@
+---
+import { LAND, REGIONS, HUB } from "../data/world";
+
+/**
+ * Five-second cold-open: data centres → AI agents → the match → settlement.
+ * The same four beats the network section explains, compressed into a title
+ * sequence, drawn from the same world data so it reads as the same world.
+ *
+ * Safety rules this thing has to obey, because a splash screen that gets
+ * stuck is worse than no splash screen at all:
+ *   - It is display:none by default. A tiny head script in Base.astro sets
+ *     data-intro on <html> BEFORE first paint, which is the only thing that
+ *     reveals it. No JS, no overlay — the site is simply there.
+ *   - Once per session, never on repeat navigation.
+ *   - Skipped entirely under prefers-reduced-motion.
+ *   - Skippable by click, Esc, or the skip button.
+ *   - A hard failsafe removes it after 8s no matter what.
+ * It inherits theme tokens, so it is correct in all three palettes.
+ */
+---
+
+<div class="intro" data-intro-root aria-hidden="true">
+  <canvas data-intro-canvas></canvas>
+
+  <div class="intro-ui">
+    <span class="intro-logo" aria-hidden="true"></span>
+
+    <div class="intro-stage">
+      <span class="intro-num mono" data-intro-num>01</span>
+      <span class="intro-label display" data-intro-label>Data centres</span>
+    </div>
+
+    <div class="intro-bar" aria-hidden="true"><i data-intro-bar></i></div>
+
+    <button class="intro-skip mono" data-intro-skip type="button">skip intro</button>
+  </div>
+</div>
+
+<style is:global>
+  /* Hidden unless the head script opts in. This is the failsafe: with no JS
+     the attribute is never set and the overlay never exists visually. */
+  .intro {
+    display: none;
+  }
+  html[data-intro] .intro {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+
+    /* A cold open is a cinema moment, so it is dark in every theme — and on a
+       light page that makes the hand-off a reveal rather than a flat cut.
+       Each theme still keeps its own accent pair, so the three designs stay
+       distinguishable. */
+    --color-void: #05080a;
+    --color-paper: #e8eef0;
+    --color-paper-faint: #5a6b75;
+    --color-rule: #1a2530;
+    --color-rule-hot: #26343f;
+    background: var(--color-void);
+    opacity: 1;
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  html[data-intro] body {
+    overflow: hidden;
+  }
+  .intro.out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .intro canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .intro-ui {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: clamp(1.2rem, 3vw, 2.4rem);
+  }
+
+  .intro-logo {
+    display: block;
+    width: 168px;
+    max-width: 44vw;
+    height: 27px;
+    background: url("/logo-lockup.png") no-repeat left center;
+    background-size: contain;
+    opacity: 0;
+    animation: intro-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  }
+  /* The ground here is always dark, so the light theme borrows the dark
+     theme's brighter accent pair and the white-"Mid" lockup. */
+  html[data-theme="light"] .intro {
+    --color-agent: #22c8e8;
+    --color-agent-hot: #7de9f7;
+    --color-signal: #35e084;
+    --grad-brand-soft: linear-gradient(100deg, #22c8e8 10%, #35e084 90%);
+  }
+  @keyframes intro-fade {
+    to {
+      opacity: 1;
+    }
+  }
+
+  .intro-stage {
+    align-self: end;
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+  }
+  .intro-num {
+    color: var(--color-signal);
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+  }
+  .intro-label {
+    font-size: clamp(1.8rem, 6vw, 4.2rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-paper);
+  }
+
+  .intro-bar {
+    margin-top: 1.1rem;
+    height: 2px;
+    background: var(--color-rule);
+    overflow: hidden;
+  }
+  .intro-bar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--grad-brand-soft);
+  }
+
+  .intro-skip {
+    position: absolute;
+    right: clamp(1.2rem, 3vw, 2.4rem);
+    top: clamp(1.2rem, 3vw, 2.4rem);
+    pointer-events: auto;
+    background: none;
+    border: 1px solid var(--color-rule-hot);
+    color: var(--color-paper-faint);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.42rem 0.75rem;
+    cursor: pointer;
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .intro-skip:hover {
+    color: var(--color-paper);
+    border-color: var(--color-agent);
+  }
+</style>
+
+<script is:inline define:vars={{ LAND, REGIONS, HUB }}>
+  (function () {
+    if (!document.documentElement.hasAttribute("data-intro")) return;
+
+    var root = document.querySelector("[data-intro-root]");
+    if (!root) return;
+    var canvas = root.querySelector("[data-intro-canvas]");
+    var ctx = canvas.getContext("2d");
+    var elNum = root.querySelector("[data-intro-num]");
+    var elLabel = root.querySelector("[data-intro-label]");
+    var elBar = root.querySelector("[data-intro-bar]");
+    var btn = root.querySelector("[data-intro-skip]");
+
+    var css = getComputedStyle(root);
+    function tok(n, fb) {
+      var v = css.getPropertyValue(n).trim();
+      return v || fb;
+    }
+    var AGENT = tok("--color-agent", "#22c8e8");
+    var AGENT_HOT = tok("--color-agent-hot", "#7de9f7");
+    var SIGNAL = tok("--color-signal", "#35e084");
+    var PAPER = tok("--color-paper", "#e8eef0");
+
+    function rgba(hex, a) {
+      var n = parseInt(hex.slice(1), 16);
+      return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+    }
+
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      try { sessionStorage.setItem("midearth:intro", "1"); } catch (e) {}
+      root.classList.add("out");
+      setTimeout(function () {
+        document.documentElement.removeAttribute("data-intro");
+        if (root.parentNode) root.parentNode.removeChild(root);
+      }, 600);
+    }
+    // hard failsafe: never leave the page covered
+    setTimeout(finish, 8000);
+
+    if (btn) btn.addEventListener("click", finish);
+    root.addEventListener("click", finish);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" || e.key === " ") finish();
+    });
+
+    /* ------------------------------------------------------------ layout */
+    var LAT_TOP = 74, LAT_BOT = -54;
+    var W = 0, H = 0, mx = 0, my = 0, mw = 0, mh = 0, hub = null, sites = [], dots = [];
+
+    function project(lat, lon) {
+      return {
+        x: mx + ((lon + 180) / 360) * mw,
+        y: my + ((LAT_TOP - lat) / (LAT_TOP - LAT_BOT)) * mh,
+      };
+    }
+
+    function layout() {
+      var d = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.round(W * d);
+      canvas.height = Math.round(H * d);
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+
+      var aspect = 360 / (LAT_TOP - LAT_BOT);
+      mw = W * 0.92;
+      mh = mw / aspect;
+      if (mh > H * 0.62) { mh = H * 0.62; mw = mh * aspect; }
+      mx = (W - mw) / 2;
+      my = (H - mh) / 2;
+
+      dots = [];
+      for (var i = 0; i < LAND.length; i++) {
+        var row = LAND[i];
+        var lat = 90 - row.r * 5 - 2.5;
+        if (lat > LAT_TOP || lat < LAT_BOT) continue;
+        for (var s = 0; s < row.s.length; s++) {
+          for (var c = row.s[s][0]; c <= row.s[s][1]; c++) {
+            var p = project(lat, -180 + c * 5 + 2.5);
+            dots.push({ x: p.x, y: p.y, d: (p.x - mx) / mw });
+          }
+        }
+      }
+      hub = project(HUB.lat, HUB.lon);
+      sites = REGIONS.map(function (rg, i) {
+        var p = project(rg.lat, rg.lon);
+        var midx = (p.x + hub.x) / 2, midy = (p.y + hub.y) / 2;
+        var dx = hub.x - p.x, dy = hub.y - p.y;
+        var len = Math.hypot(dx, dy) || 1;
+        var bow = Math.min(len * 0.26, mh * 0.3);
+        return {
+          x: p.x, y: p.y,
+          cx: midx + (-dy / len) * bow,
+          cy: midy + (dx / len) * bow,
+          at: 0.15 + (i / REGIONS.length) * 0.72, // staggered arrival in beat 1
+          fly: 0.05 + (i / REGIONS.length) * 0.55, // staggered launch in beat 2
+        };
+      });
+    }
+    layout();
+    window.addEventListener("resize", layout, { passive: true });
+
+    function bez(s, t) {
+      var u = 1 - t;
+      return {
+        x: u * u * s.x + 2 * u * t * s.cx + t * t * hub.x,
+        y: u * u * s.y + 2 * u * t * s.cy + t * t * hub.y,
+      };
+    }
+
+    /* --------------------------------------------------------- timeline */
+    var P1 = 1.2, P2 = 2.6, P3 = 4.1, TOTAL = 5.0;
+    var BEATS = [
+      { n: "01", t: "Data centres" },
+      { n: "02", t: "AI agents" },
+      { n: "03", t: "The match" },
+      { n: "04", t: "Settlement" },
+    ];
+    var beat = -1;
+    function setBeat(i) {
+      if (i === beat) return;
+      beat = i;
+      if (elNum) elNum.textContent = BEATS[i].n;
+      if (elLabel) {
+        elLabel.textContent = BEATS[i].t;
+        elLabel.animate(
+          [
+            { opacity: 0, transform: "translateY(14px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: 460, easing: "cubic-bezier(.16,1,.3,1)" }
+        );
+      }
+    }
+
+    // a handful of blocks that score during beat 3
+    var pucks = [];
+    for (var q = 0; q < 5; q++) {
+      pucks.push({ off: q * 0.13, y: (q - 2) * 0.055, v: [1, 2, 3][q % 3] });
+    }
+
+    var t0 = 0;
+    function frame(now) {
+      if (done) return;
+      if (!t0) t0 = now;
+      var t = (now - t0) / 1000;
+      if (t >= TOTAL) { finish(); return; }
+      requestAnimationFrame(frame);
+
+      if (elBar) elBar.style.width = (t / TOTAL) * 100 + "%";
+      setBeat(t < P1 ? 0 : t < P2 ? 1 : t < P3 ? 2 : 3);
+
+      ctx.clearRect(0, 0, W, H);
+
+      // --- beat 1: the world resolves, left to right ---------------------
+      var k1 = Math.min(t / P1, 1);
+      for (var i = 0; i < dots.length; i++) {
+        var dt = dots[i];
+        var local = (k1 - dt.d * 0.85) / 0.15;
+        if (local <= 0) continue;
+        var a = Math.min(local, 1);
+        ctx.fillStyle = rgba(AGENT, 0.42 * a);
+        ctx.beginPath();
+        ctx.arc(dt.x, dt.y, 1.5 * a + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // --- data centres pop in, then hold --------------------------------
+      for (var s = 0; s < sites.length; s++) {
+        var st = sites[s];
+        var app = (k1 - st.at) / 0.14;
+        if (app <= 0) continue;
+        var ap = Math.min(app, 1);
+        if (ap < 1) {
+          ctx.strokeStyle = rgba(AGENT_HOT, (1 - ap) * 0.85);
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.arc(st.x, st.y, 6 + (1 - ap) * -0 + ap * 26, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.save();
+        ctx.globalAlpha = ap;
+        ctx.shadowColor = AGENT;
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = AGENT;
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(st.x - 5, st.y - 6, 10, 12);
+        ctx.restore();
+        ctx.globalAlpha = ap;
+        ctx.fillStyle = rgba(AGENT_HOT, 0.95);
+        for (var u = 0; u < 3; u++) ctx.fillRect(st.x - 3, st.y - 3.8 + u * 3.2, 6, 1.2);
+        ctx.globalAlpha = 1;
+      }
+
+      // --- beat 2: agents launch and fly to the arena --------------------
+      if (t > P1) {
+        var k2 = Math.min((t - P1) / (P2 - P1), 1);
+        for (var f = 0; f < sites.length; f++) {
+          var sf = sites[f];
+          var prog = (k2 - sf.fly) / 0.45;
+          if (prog <= 0) continue;
+          var pr = Math.min(prog, 1);
+          ctx.strokeStyle = rgba(AGENT, 0.2);
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(sf.x, sf.y);
+          ctx.quadraticCurveTo(sf.cx, sf.cy, hub.x, hub.y);
+          ctx.stroke();
+
+          ctx.strokeStyle = rgba(AGENT_HOT, 0.75);
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          var from = Math.max(0, pr - 0.24);
+          var a0 = bez(sf, from);
+          ctx.moveTo(a0.x, a0.y);
+          for (var kk = from; kk <= pr; kk += 0.02) {
+            var qq = bez(sf, kk);
+            ctx.lineTo(qq.x, qq.y);
+          }
+          ctx.stroke();
+          var hd = bez(sf, pr);
+          ctx.save();
+          ctx.shadowColor = AGENT_HOT;
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = AGENT_HOT;
+          ctx.beginPath();
+          ctx.arc(hd.x, hd.y, 3.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // --- beat 3: the match ---------------------------------------------
+      var matchOn = t > P2 && t < P3;
+      if (matchOn) {
+        var k3 = (t - P2) / (P3 - P2);
+        var span = Math.min(mw * 0.3, 260);
+        var gx = hub.x + span * 0.5;
+        ctx.strokeStyle = rgba(SIGNAL, 0.85);
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(gx, hub.y - span * 0.24);
+        ctx.lineTo(gx, hub.y + span * 0.24);
+        ctx.stroke();
+        ctx.fillStyle = rgba(SIGNAL, 0.09);
+        ctx.fillRect(gx, hub.y - span * 0.24, span * 0.22, span * 0.48);
+
+        for (var pz = 0; pz < pucks.length; pz++) {
+          var pk = pucks[pz];
+          var pp = (k3 - pk.off) / 0.55;
+          if (pp <= 0) continue;
+          var ppc = Math.min(pp, 1);
+          var px = hub.x - span * 0.42 + ppc * (span * 0.95);
+          var py = hub.y + pk.y * span;
+          var sz = 7 + pk.v * 2;
+          ctx.fillStyle = rgba(PAPER, 0.14);
+          ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
+          ctx.strokeStyle = rgba(ppc >= 1 ? SIGNAL : PAPER, 0.8);
+          ctx.lineWidth = 0.9;
+          ctx.strokeRect(px - sz / 2, py - sz / 2, sz, sz);
+          if (ppc >= 1) {
+            ctx.fillStyle = rgba(SIGNAL, 0.9);
+            ctx.font = "600 11px ui-monospace, monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("+" + pk.v, px, py - sz);
+          }
+        }
+        var ring = (k3 * 2) % 1;
+        ctx.strokeStyle = rgba(SIGNAL, (1 - ring) * 0.65);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(hub.x, hub.y, 16 + ring * 70, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // --- beat 4: settlement --------------------------------------------
+      if (t > P3) {
+        var k4 = Math.min((t - P3) / (TOTAL - P3), 1);
+        var n = 6;
+        var bw = 22, gap = 14;
+        var total = n * bw + (n - 1) * gap;
+        var sx = hub.x - total / 2;
+        for (var b = 0; b < n; b++) {
+          var bp = (k4 - b * 0.11) / 0.2;
+          if (bp <= 0) continue;
+          var bpc = Math.min(bp, 1);
+          var bx = sx + b * (bw + gap);
+          ctx.save();
+          ctx.globalAlpha = bpc;
+          ctx.shadowColor = SIGNAL;
+          ctx.shadowBlur = 14 * bpc;
+          ctx.strokeStyle = SIGNAL;
+          ctx.lineWidth = 1.4;
+          ctx.strokeRect(bx, hub.y - bw / 2, bw, bw);
+          ctx.fillStyle = rgba(SIGNAL, 0.2 * bpc);
+          ctx.fillRect(bx, hub.y - bw / 2, bw, bw);
+          ctx.restore();
+          if (b > 0) {
+            ctx.strokeStyle = rgba(SIGNAL, 0.5 * bpc);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(bx - gap, hub.y);
+            ctx.lineTo(bx, hub.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // the arena marker, present from beat 2 onward
+      if (t > P1) {
+        var live = matchOn;
+        var col = live ? SIGNAL : AGENT;
+        ctx.save();
+        ctx.shadowColor = col;
+        ctx.shadowBlur = live ? 26 : 14;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(hub.x, hub.y, 13, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = rgba(col, 0.9);
+        ctx.beginPath();
+        ctx.arc(hub.x, hub.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
