@@ -150,15 +150,23 @@ screens, and that distinction is deliberate.
 - `.atmos-grid` — blueprint rule, masked to fade at the edges.
 - `.atmos-beam` — a soft diagonal sweep crossing the ground every 19 seconds. Long
   period on purpose: it should be noticed on second glance, not first.
-- `Circuitry.astro` — a circuit field routed the way a board actually is: horizontal,
-  vertical and 45° segments only, never a free angle. It maps onto the product rather
-  than decorating it — **trace = a connection, pad = an agent in a region, pulse = value
-  moving down that connection, flash = it settled.** The trace layer is rendered once
-  into an offscreen canvas and blitted, so only pulses and pad flashes redraw per frame.
-  Trace count scales with area and is capped (38 normally, 14 on a low-core device); it
-  pauses offscreen and on hidden tabs, and draws a single static frame under reduced
-  motion. Pass `density="low"` and `packets={false}` where the section already carries
-  motion.
+- `Globe.astro` — a slowly rotating globe carrying the real cloud regions, with
+  great-circle arcs running between them. It maps onto the product rather than
+  decorating it — **dotted land = the world (same `LAND` mask as the network map),
+  marker = a data centre at its real coordinates, arc = a connection, pulse = an agent
+  crossing to a match, flash = it settled at the far end.**
+
+  Orthographic projection with **back-hemisphere culling**: a point draws only when it
+  faces the viewer and fades toward the limb, which is what makes a flat dot field read
+  as a sphere. A graticule of meridians and parallels reinforces it — without those, dots
+  on a circle still read as a flat scatter. Arcs are **slerped** between endpoints and
+  lifted off the surface, so they curve over the horizon like flight paths rather than
+  cutting through the planet.
+
+  `x` positions the sphere horizontally (the hero pushes it right, so the copy column
+  stays clear) and `scale` sets its radius. Pauses offscreen and on hidden tabs; draws a
+  single static frame with connections mid-flight under reduced motion. Pass
+  `density="low"` and `packets={false}` where the section already carries motion.
 
 Type: **Archivo** at expanded widths for display (scoreboard authority), **Instrument
 Sans** for body, **JetBrains Mono** for anything the machine says — endpoints, keys, pool

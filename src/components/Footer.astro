@@ -1,11 +1,11 @@
 ---
 import Atmos from "./Atmos.astro";
-import Circuitry from "./Circuitry.astro";
+import Globe from "./Globe.astro";
 ---
 
 <footer class="ft ground-void has-atmos">
   <Atmos aurora={true} grid={true} vignette={true} noise={true} />
-  <Circuitry density="low" packets={false} />
+  <Globe density="low" packets={false} scale={0.4} />
 
   <div class="wrap-wide">
     <div class="ft-grid">
