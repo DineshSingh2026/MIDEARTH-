@@ -72,21 +72,21 @@ const { compact = false, id = "arena" } = Astro.props;
      samples its colours from inside here, so it follows automatically.
      The figcaption sits outside the housing and stays on the page theme. */
   .housing {
-    --color-void: #050506;
-    --color-deck: #0b0b0d;
-    --color-deck-raise: #131315;
-    --color-deck-high: #1b1b1e;
-    --color-paper: #eff0f1;
-    --color-paper-dim: #9a9da2;
-    --color-paper-faint: #676a6f;
-    --color-rule: #232427;
-    --color-rule-hot: #303136;
-    --color-agent: #dde1e6;
-    --color-agent-hot: #ffffff;
-    --color-agent-deep: #7c858f;
-    --color-signal: #ff3b30;
-    --color-signal-hot: #ff7a72;
-    --color-signal-deep: #9e1810;
+    --color-void: #04070a;
+    --color-deck: #070c11;
+    --color-deck-raise: #0d141b;
+    --color-deck-high: #131d25;
+    --color-paper: #e8eef0;
+    --color-paper-dim: #8da0a9;
+    --color-paper-faint: #5a6b75;
+    --color-rule: #1a2530;
+    --color-rule-hot: #26343f;
+    --color-agent: #22c8e8;
+    --color-agent-hot: #7de9f7;
+    --color-agent-deep: #0b6e85;
+    --color-signal: #35e084;
+    --color-signal-hot: #86f3b4;
+    --color-signal-deep: #12904c;
 
     position: relative;
     display: grid;
@@ -460,15 +460,15 @@ const { compact = false, id = "arena" } = Astro.props;
         return v || fb;
       };
       return {
-        void: C("--color-void", "#050506"),
-        deck: C("--color-deck", "#0b0b0d"),
-        rule: C("--color-rule", "#232427"),
-        agent: C("--color-agent", "#dde1e6"),
-        agentHot: C("--color-agent-hot", "#ffffff"),
-        signal: C("--color-signal", "#ff3b30"),
-        signalHot: C("--color-signal-hot", "#ff7a72"),
-        paper: C("--color-paper", "#eff0f1"),
-        dim: C("--color-paper-dim", "#9a9da2"),
+        void: C("--color-void", "#04070a"),
+        deck: C("--color-deck", "#070c11"),
+        rule: C("--color-rule", "#1a2530"),
+        agent: C("--color-agent", "#22c8e8"),
+        agentHot: C("--color-agent-hot", "#7de9f7"),
+        signal: C("--color-signal", "#35e084"),
+        signalHot: C("--color-signal-hot", "#86f3b4"),
+        paper: C("--color-paper", "#e8eef0"),
+        dim: C("--color-paper-dim", "#8da0a9"),
       };
     }
 

@@ -20,57 +20,52 @@ daylight ground, wide measure, editorial spacing, no glow. Pages belong to one s
 sit on the seam, and the palette flips accordingly — the site enacts the product's
 central separation instead of describing it.
 
-The palette is **achromatic except one red**. That is the whole rule, and it is load-
-bearing: if a pixel has colour in it, the arena is live. Nothing else may claim red —
-not a link, not a hover, not a heading, not an icon. Everything else is ground, type,
-rule, or the cool light of the agent's side.
+**The palette is derived from the logo.** The mark's gradient runs blue → cyan → teal
+→ green → lime, and the design system already had exactly two semantic roles, so they
+map one to one:
 
-| token            | value     | means                                            |
-| ---------------- | --------- | ------------------------------------------------ |
-| `--color-void`   | `#050506` | deepest ground, behind the instrument             |
-| `--color-deck`   | `#0B0B0D` | instrument ground, agent side                     |
-| `--color-glass`  | `#161618` | the boundary itself — arena housing, seam         |
-| `--color-stands` | `#E7E5E1` | daylight ground, human side                       |
-| `--color-signal` | `#FF3B30` | live / in progress / on air — **nothing else**    |
-| `--color-agent`  | `#DDE1E6` | the agent's side of the glass — a light, not a hue |
-| `--color-ink`    | `#0E0E10` | type on light                                     |
-| `--color-rule`   | `#232427` | hairline on dark (`--color-rule-light` on light)  |
+- **cyan is the machine** — the agent's side of the glass
+- **green is the match** — live, in progress, on air
 
-Both roles carry `-hot` and `-deep` steps for gradients, glows and separation. `--color-
-agent` is deliberately **not** a colour: the machine reads as polished metal, so the red
-is the only warm thing on screen and never has to compete. Where the agent role needs to
-separate from body text — endpoint paths in `.code`, for instance — it does so by
-temperature and weight rather than hue.
+Nothing else on the site is a hue. That constraint is what keeps a colourful page from
+becoming a colourful mess, and it means the site can never clash with its own logo.
 
-Because red carries "error" baggage elsewhere in UI, the discipline matters more than
-usual here. Red on this site means *on air*. If you ever need an error state, build it
-from `--color-ink` on `--color-stands`, or a rule weight — not from another hue.
+| token               | dark      | light     | means                                    |
+| ------------------- | --------- | --------- | ---------------------------------------- |
+| `--color-void`      | `#04070A` | `#FBFDFC` | deepest ground, behind the instrument     |
+| `--color-deck`      | `#070C11` | `#F2F6F5` | instrument ground, agent side             |
+| `--color-glass`     | `#101922` | `#E6EEEC` | the boundary — arena housing, seam        |
+| `--color-stands`    | `#EDF1EF` | `#E2EAE6` | daylight ground, human side               |
+| `--color-agent`     | `#22C8E8` | `#0B7F99` | the agent's side of the glass             |
+| `--color-signal`    | `#35E084` | `#0F8A4A` | live / in progress / on air               |
+| `--color-brand-blue`| `#0177BE` | `#0166A4` | far end of the ramp — **gradients only**  |
+| `--color-brand-lime`| `#9CF216` | `#5F9A0D` | far end of the ramp — **gradients only**  |
 
-**Where red is allowed**, and nowhere else:
+The ground is blue-black rather than neutral black, so it sits *under* the brand's cool
+end instead of fighting it. Both hues carry `-hot` and `-deep` steps.
 
-- the arena's live telemetry — status LED, goal zone, score bursts, match progress bar
-- `.tag-live`, and the nav's "arena open" LED and `Live` link
-- `:focus-visible` and the skip link — accessibility affordances, transient by nature
-- `.ph` unfilled `{{PLACEHOLDER}}` tokens — deliberate and temporary; they disappear
-  when the values in the table below are filled in
+`--grad-brand` and `--grad-brand-soft` hold the ramp in one place. Every gradient on the
+site is a slice of the logo's own ramp — the headline word, the primary button, the seam,
+the arena progress bar. The two `brand-*` tokens exist only to extend that ramp; they are
+never used as flat fills, because saturated blue and lime do not hold type.
 
-Everything that is *not* live — CTAs, link hovers, section numbers, corner brackets,
-HTTP verbs in code, the seam, hover states — is built from the agent light and the
-ground steps. `.code` in particular derives its whole syntax scheme from luminance and
-weight, because code blocks appear on nearly every page and red there would drown the
-signal.
+`.code` derives its syntax scheme from luminance and weight with cyan for endpoint paths:
+comment → body → path → verb, faintest to brightest. Code blocks appear on nearly every
+page, so the scheme has to stay quiet.
 
 Two roles resolve per ground, so they stay legible on both: `--strong` (full-contrast
-text — white on the deck, ink on the stands) and `--signal-fg` (pure red on the deck,
-`--color-signal-deep` on the stands, where pure red fails contrast as small text).
+text — white on the deck, ink on the stands) and `--signal-fg` (the live hue, stepped
+darker on the stands where the bright value fails contrast as small text).
 
 ### Dark and light
 
 Both themes ship. The concept does not invert — it re-lights. In light mode the agent's
 ground becomes a clinical cool white (an instrument panel under lab light) and the
-human's stands stay warm paper, so the two grounds still separate by **temperature and
-a step of value** rather than by one being dark. The red darkens to `#D92B20` to hold
-contrast, and the agent role flips from a near-white light to a dark brushed steel.
+human's stands step slightly deeper, so the two grounds still separate by **temperature
+and a step of value** rather than by one being dark. Both brand hues darken to hold
+contrast on light: cyan `#22C8E8 → #0B7F99`, green `#35E084 → #0F8A4A`. `.btn-solid`
+also flips to light type, because the light ramp is deep enough that dark type on it
+fails contrast.
 
 - `html[data-theme="light"]` in `global.css` re-points the same tokens; nothing else in
   the codebase knows a theme exists.
@@ -107,6 +102,19 @@ screens, and that distinction is deliberate.
   animation, and a `<noscript>` block in `Base.astro` forces reveals visible so the page
   is never blank without JavaScript.
 
+**Background layers**, in back-to-front order:
+
+- `.atmos-aurora` — three brand-coloured lights drifting on 34/44/52-second periods.
+- `.atmos-grid` — blueprint rule, masked to fade at the edges.
+- `.atmos-beam` — a soft diagonal sweep crossing the ground every 19 seconds. Long
+  period on purpose: it should be noticed on second glance, not first.
+- `Swarm.astro` — a field of agents that link when they come within range, with the
+  occasional packet running down a live link. It is the pool, abstracted: nodes find
+  each other, hold a connection, drift apart. Node count scales with area and is capped
+  (58 normally, 20 on a low-core device); it pauses offscreen and on hidden tabs, and
+  draws a single static frame under reduced motion. Pass `density="low"` and
+  `packets={false}` where the section already carries motion.
+
 Type: **Archivo** at expanded widths for display (scoreboard authority), **Instrument
 Sans** for body, **JetBrains Mono** for anything the machine says — endpoints, keys, pool
 IDs, ticks, scores, ledger rows, timers. Monospace is information, not decoration.
@@ -142,10 +150,10 @@ Both the nav and the footer set the lockup as a `background-image` rather than a
 so the browser only ever fetches the file for the active theme. The elements carry
 `aria-label`, so nothing is lost by the image being decorative.
 
-**On palette:** the logo's blue-to-green gradient is the one place brand colour lives —
-it appears nowhere else in the UI. It does not weaken the `red = live` rule, because it
-is not red, but it is the only chromatic element outside the arena. If that ever grates,
-a desaturated mark is a small change; the coloured logo is the deliberate default.
+**On palette:** the logo is no longer the odd one out — the whole site's palette is
+sampled from it. That was the fix for a colour scheme that read as clashing: the mark is
+blue-to-green, so a red accent fought it on every screen. Deriving the two semantic roles
+from the two ends of the mark makes the logo look native rather than pasted on.
 
 ## The signature element
 

@@ -4,6 +4,7 @@ import Arena from "../components/Arena.astro";
 import Doors from "../components/Doors.astro";
 import Ticker from "../components/Ticker.astro";
 import Atmos from "../components/Atmos.astro";
+import Swarm from "../components/Swarm.astro";
 import { games } from "../data/games";
 
 const agentLoop = [
@@ -66,7 +67,8 @@ const ownerCan = [
 >
   <!-- ================================================================ hero -->
   <section class="hero ground-void has-atmos">
-    <Atmos horizon={true} />
+    <Atmos horizon={true} beam={true} />
+    <Swarm />
 
     <div class="wrap-wide hero-in">
       <!-- top rail: this page is an instrument, and it says so -->
@@ -79,7 +81,7 @@ const ownerCan = [
       <h1 class="display display-xxl hero-h">
         <span class="line-mask"><span>You watch.</span></span>
         <span class="line-mask" style="--d:110ms">
-          <span>Your <em class="wash-agent">agent</em> plays.</span>
+          <span>Your <em class="wash-brand">agent</em> plays.</span>
         </span>
       </h1>
 
@@ -302,7 +304,8 @@ const ownerCan = [
 
   <!-- =========================================================== guarantee -->
   <section class="ground-void band guarantee has-atmos" aria-labelledby="trust-h">
-    <Atmos horizon={true} />
+    <Atmos horizon={true} beam={true} />
+    <Swarm density="low" packets={false} />
 
     <div class="wrap-wide">
       <p class="band-index"><b>04</b> the guarantee</p>
@@ -310,7 +313,7 @@ const ownerCan = [
       <h2 id="trust-h" class="display display-xl trust">
         <span class="line-mask"><span>An owner cannot move</span></span>
         <span class="line-mask" style="--d:100ms"
-          ><span>an <em class="wash-agent">agent&rsquo;s</em> money.</span></span
+          ><span>an <em class="wash-brand">agent&rsquo;s</em> money.</span></span
         >
       </h2>
 

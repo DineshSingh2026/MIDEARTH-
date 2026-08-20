@@ -10,44 +10,48 @@
    ================================================================== */
 
 @theme {
-  /* -- grounds ---------------------------------------------------- */
-  --color-void: #050506; /* deepest, behind everything */
-  --color-deck: #0b0b0d; /* instrument ground, agent side */
-  --color-deck-raise: #131315; /* raised panel on the deck */
-  --color-deck-high: #1b1b1e; /* highest panel on the deck */
-  --color-glass: #161618; /* the boundary itself */
-  --color-stands: #e7e5e1; /* daylight ground, human side */
-  --color-stands-raise: #f3f2ef;
-  --color-stands-deep: #d8d5cf;
+  /* -- grounds -----------------------------------------------------
+     Blue-black rather than neutral black, so the ground sits under
+     the brand's cool end instead of fighting it. */
+  --color-void: #04070a; /* deepest, behind everything */
+  --color-deck: #070c11; /* instrument ground, agent side */
+  --color-deck-raise: #0d141b; /* raised panel on the deck */
+  --color-deck-high: #131d25; /* highest panel on the deck */
+  --color-glass: #101922; /* the boundary itself */
+  --color-stands: #edf1ef; /* daylight ground, human side */
+  --color-stands-raise: #f6f8f7;
+  --color-stands-deep: #dde3e0;
 
-  /* -- the only hue ------------------------------------------------
-     Everything on this site is achromatic except one red. If a pixel
-     has colour in it, it means the arena is live. Nothing else may
-     claim it — not a link, not a hover, not a heading. */
-  --color-signal: #ff3b30; /* live / in progress / on air — nothing else */
-  --color-signal-hot: #ff7a72;
-  --color-signal-deep: #9e1810;
+  /* -- the two brand hues ------------------------------------------
+     Both are sampled from the logo, whose gradient runs blue → cyan
+     → teal → green → lime. The design system already had exactly two
+     roles and the mark has exactly two ends, so they map one to one:
+     cyan is the machine, green is the match. Nothing else is a hue. */
+  --color-agent: #22c8e8; /* the agent's side of the glass */
+  --color-agent-hot: #7de9f7;
+  --color-agent-deep: #0b6e85;
 
-  /* -- the agent's side of the glass -------------------------------
-     Not a hue: a cool light. The machine reads as polished metal
-     against the red, which is the only warm thing on screen. */
-  --color-agent: #dde1e6;
-  --color-agent-hot: #ffffff;
-  --color-agent-deep: #7c858f;
+  --color-signal: #35e084; /* live / in progress / on air */
+  --color-signal-hot: #86f3b4;
+  --color-signal-deep: #12904c;
+
+  /* the far ends of the mark, for gradients only — never as flat fills */
+  --color-brand-blue: #0177be;
+  --color-brand-lime: #9cf216;
 
   /* -- type ------------------------------------------------------- */
-  --color-ink: #0e0e10;
-  --color-ink-dim: #55575b;
-  --color-ink-faint: #8a8c90;
-  --color-paper: #eff0f1;
-  --color-paper-dim: #9a9da2;
-  --color-paper-faint: #676a6f;
+  --color-ink: #0b1013;
+  --color-ink-dim: #4e5a5c;
+  --color-ink-faint: #82908f;
+  --color-paper: #e8eef0;
+  --color-paper-dim: #8da0a9;
+  --color-paper-faint: #5a6b75;
 
   /* -- lines ------------------------------------------------------ */
-  --color-rule: #232427;
-  --color-rule-hot: #303136;
-  --color-rule-light: #c8c5c0;
-  --color-rule-light-hot: #b2afa9;
+  --color-rule: #1a2530;
+  --color-rule-hot: #26343f;
+  --color-rule-light: #cdd4d1;
+  --color-rule-light-hot: #b4bdb9;
 
   --font-display: "Archivo", "Archivo Expanded", ui-sans-serif, sans-serif;
   --font-body: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
@@ -62,12 +66,28 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* The brand gradient, in one place. Every gradient on the site is a
+     slice of the logo's own ramp, which is what keeps a colourful page
+     from turning into a colourful mess. */
+  --grad-brand: linear-gradient(
+    100deg,
+    var(--color-brand-blue),
+    var(--color-agent) 34%,
+    var(--color-signal) 74%,
+    var(--color-brand-lime)
+  );
+  --grad-brand-soft: linear-gradient(
+    100deg,
+    var(--color-agent) 10%,
+    var(--color-signal) 90%
+  );
+
   --glow-agent:
-    0 0 0 1px color-mix(in srgb, var(--color-agent) 22%, transparent),
-    0 0 28px -6px color-mix(in srgb, var(--color-agent) 45%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-agent) 28%, transparent),
+    0 0 34px -8px color-mix(in srgb, var(--color-agent) 60%, transparent);
   --glow-signal:
-    0 0 0 1px color-mix(in srgb, var(--color-signal) 26%, transparent),
-    0 0 30px -6px color-mix(in srgb, var(--color-signal) 50%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-signal) 30%, transparent),
+    0 0 36px -8px color-mix(in srgb, var(--color-signal) 62%, transparent);
 
   --shadow-panel:
     0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
@@ -94,38 +114,40 @@ html[data-theme="light"] {
   color-scheme: light;
 
   /* -- grounds ---------------------------------------------------- */
-  --color-void: #fdfdfc; /* brightest, behind everything */
-  --color-deck: #f5f6f6; /* instrument ground, agent side — cool */
-  --color-deck-raise: #eceeee;
-  --color-deck-high: #e3e6e6;
-  --color-glass: #e9ecec;
-  --color-stands: #e6e2d9; /* daylight ground, human side — warm */
-  --color-stands-raise: #f0ede6;
-  --color-stands-deep: #d5d0c3;
+  --color-void: #fbfdfc; /* brightest, behind everything */
+  --color-deck: #f2f6f5; /* instrument ground, agent side — cool */
+  --color-deck-raise: #e9efee;
+  --color-deck-high: #dfe8e6;
+  --color-glass: #e6eeec;
+  --color-stands: #e2eae6; /* daylight ground, human side */
+  --color-stands-raise: #eef4f2;
+  --color-stands-deep: #d0dbd6;
 
-  /* -- the only hue, darkened to hold contrast on light ground ----- */
-  --color-signal: #d92b20;
-  --color-signal-hot: #ff5347;
-  --color-signal-deep: #8c1109;
+  /* -- the same two brand hues, darkened to hold contrast on light -- */
+  --color-agent: #0b7f99;
+  --color-agent-hot: #064f60;
+  --color-agent-deep: #7fc4d4;
 
-  /* -- the agent's side: brushed steel, now dark against the light -- */
-  --color-agent: #3f484f;
-  --color-agent-hot: #14181c;
-  --color-agent-deep: #98a0a6;
+  --color-signal: #0f8a4a;
+  --color-signal-hot: #0a6335;
+  --color-signal-deep: #7fd3a4;
+
+  --color-brand-blue: #0166a4;
+  --color-brand-lime: #5f9a0d;
 
   /* -- type: `paper` is type on the deck, `ink` is type on the stands */
-  --color-paper: #14161a;
-  --color-paper-dim: #5b6166;
-  --color-paper-faint: #878d92;
-  --color-ink: #17150f;
-  --color-ink-dim: #5c584c;
-  --color-ink-faint: #8a8578;
+  --color-paper: #0d1417;
+  --color-paper-dim: #4d5d63;
+  --color-paper-faint: #7a8a90;
+  --color-ink: #0b1215;
+  --color-ink-dim: #4a5a58;
+  --color-ink-faint: #7c8c88;
 
   /* -- lines ------------------------------------------------------ */
-  --color-rule: #dadedd;
-  --color-rule-hot: #c2c8c8;
-  --color-rule-light: #cbc5b7;
-  --color-rule-light-hot: #b4ad9c;
+  --color-rule: #d3dedb;
+  --color-rule-hot: #bccac6;
+  --color-rule-light: #c7d4cf;
+  --color-rule-light-hot: #adbdb7;
 
   /* Light needs shallower, warmer shadow and a real top highlight;
      the dark theme's black-on-black depth reads as dirt here. */
@@ -138,11 +160,11 @@ html[data-theme="light"] {
 
   /* Glow is a dark-medium effect. On light it becomes a soft shadow. */
   --glow-agent:
-    0 0 0 1px color-mix(in srgb, var(--color-agent) 18%, transparent),
-    0 10px 24px -12px rgba(20, 24, 28, 0.35);
+    0 0 0 1px color-mix(in srgb, var(--color-agent) 22%, transparent),
+    0 12px 28px -14px color-mix(in srgb, var(--color-agent) 55%, transparent);
   --glow-signal:
     0 0 0 1px color-mix(in srgb, var(--color-signal) 26%, transparent),
-    0 10px 24px -12px color-mix(in srgb, var(--color-signal) 40%, transparent);
+    0 12px 28px -14px color-mix(in srgb, var(--color-signal) 50%, transparent);
 }
 
 html[data-theme="dark"] {
@@ -154,7 +176,7 @@ html[data-theme="dark"] {
 html[data-theme="light"] .atmos-aurora::before,
 html[data-theme="light"] .atmos-aurora::after,
 html[data-theme="light"] .atmos-aurora > i {
-  opacity: 0.14;
+  opacity: 0.2;
 }
 html[data-theme="light"] .atmos-grid {
   opacity: 0.3;
@@ -165,6 +187,13 @@ html[data-theme="light"] .atmos-vignette {
 html[data-theme="light"] .atmos-noise {
   mix-blend-mode: multiply;
   opacity: 0.028;
+}
+/* The light theme's brand ramp is deep teal to deep green, so the solid
+   button needs light type on it — dark type only works on the bright
+   dark-theme ramp. */
+html[data-theme="light"] .btn-solid,
+html[data-theme="light"] .btn-solid.on-agent {
+  color: #fbfdfc;
 }
 html[data-theme="light"] .seam::after {
   opacity: 0.3;
@@ -270,8 +299,8 @@ canvas {
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.5;
+  filter: blur(90px);
+  opacity: 0.62;
   will-change: transform;
 }
 .atmos-aurora::before {
@@ -281,7 +310,7 @@ canvas {
   top: -18vw;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--color-agent) 40%, transparent),
+    color-mix(in srgb, var(--color-agent) 62%, transparent),
     transparent 68%
   );
   animation: drift-a 34s var(--ease-in-out) infinite;
@@ -293,7 +322,7 @@ canvas {
   bottom: -22vw;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--color-signal) 34%, transparent),
+    color-mix(in srgb, var(--color-signal) 52%, transparent),
     transparent 68%
   );
   animation: drift-b 44s var(--ease-in-out) infinite;
@@ -305,7 +334,7 @@ canvas {
   top: 32%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--color-agent) 26%, transparent),
+    color-mix(in srgb, var(--color-brand-blue) 55%, transparent),
     transparent 70%
   );
   animation: drift-c 52s var(--ease-in-out) infinite;
@@ -388,6 +417,45 @@ canvas {
     color-mix(in srgb, var(--color-agent) 18%, transparent),
     transparent 70%
   );
+}
+
+/* A wide, soft beam crossing the ground — the sweep of an instrument light.
+   Long period on purpose: it should be noticed only on second glance. */
+.atmos-beam {
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  width: 42%;
+  left: -50%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--color-agent) 16%, transparent) 45%,
+    color-mix(in srgb, var(--color-signal) 12%, transparent) 60%,
+    transparent
+  );
+  filter: blur(28px);
+  transform: rotate(12deg);
+  animation: beam 19s var(--ease-in-out) infinite;
+}
+@keyframes beam {
+  0% {
+    left: -55%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: 115%;
+    opacity: 0;
+  }
+}
+html[data-theme="light"] .atmos-beam {
+  opacity: 0.55;
 }
 
 /* film grain */
@@ -493,6 +561,12 @@ canvas {
     var(--color-agent) 55%,
     var(--color-agent-deep)
   );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wash-brand {
+  background: var(--grad-brand);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -787,12 +861,23 @@ canvas {
 .btn-solid,
 .btn-solid.on-agent {
   border-color: transparent;
-  color: var(--color-void);
-  background: var(--color-agent);
+  color: #04140f;
+  background: var(--grad-brand-soft);
+  background-size: 160% 100%;
+  background-position: 0% 0%;
+  transition:
+    background-position 0.6s var(--ease-out),
+    box-shadow 0.36s var(--ease-out),
+    transform 0.36s var(--ease-out);
 }
+/* the sweep is the gradient sliding, not a second layer fading in */
 .btn-solid::before,
 .btn-solid.on-agent::before {
-  background: var(--color-agent-hot);
+  display: none;
+}
+.btn-solid:hover,
+.btn-solid.on-agent:hover {
+  background-position: 100% 0%;
 }
 .btn-solid:hover {
   color: var(--color-void);
@@ -810,6 +895,12 @@ canvas {
   padding: 0.28rem 0.6rem;
   border: 1px solid currentColor;
 }
+/* .card is a grid, so a tag would otherwise stretch the full column width */
+.card > .tag,
+.card > .tag-live {
+  justify-self: start;
+}
+
 .tag-live {
   color: var(--signal-fg, var(--color-signal));
   background: color-mix(in srgb, var(--signal-fg, var(--color-signal)) 10%, transparent);
@@ -893,11 +984,11 @@ canvas {
   background: linear-gradient(
     to bottom,
     transparent,
-    var(--color-agent) 12%,
-    var(--color-agent) 88%,
+    var(--color-agent) 14%,
+    var(--color-signal) 86%,
     transparent
   );
-  opacity: 0.4;
+  opacity: 0.65;
   z-index: 2;
 }
 /* a bead of light travels the seam, slowly */
@@ -1099,8 +1190,10 @@ canvas {
 }
 .card:hover {
   transform: translateY(-3px);
-  border-color: var(--hairline-hot);
-  box-shadow: var(--shadow-panel);
+  border-color: color-mix(in srgb, var(--color-agent) 55%, transparent);
+  box-shadow:
+    var(--shadow-panel),
+    0 0 30px -14px color-mix(in srgb, var(--color-agent) 60%, transparent);
 }
 .card > * {
   margin: 0;
