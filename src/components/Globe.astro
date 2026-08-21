@@ -2,33 +2,36 @@
 import { LAND, REGIONS } from "../data/world";
 
 /**
- * Ambient background: a slowly rotating globe with real cloud regions on it
- * and great-circle arcs running between them.
+ * The whole product on one sphere.
  *
- * It maps onto the product rather than decorating it:
- *   dotted land = the world, from the same LAND mask the network map uses
- *   marker      = a data centre, at its real coordinates
- *   arc         = a connection between two regions
- *   pulse       = an agent crossing it to reach a match
- *   flash       = the match settled at the far end
+ *   surface marker   a data centre, at its real coordinates
+ *   orbit ring       the arenas, above the world rather than in any one place
+ *   ascending arc    an agent leaving its region for a match
+ *   arena flare      the match running
+ *   descending pulse the payout settling back to where the agent lives
  *
- * Orthographic projection with back-hemisphere culling: a point is only drawn
- * when it faces the viewer, and fades as it approaches the limb, which is what
- * makes a flat dot field read as a sphere. Arcs are slerped between endpoints
- * and lifted off the surface, so they curve over the horizon like flight paths
- * instead of cutting through the planet.
+ * So "globe → agents → games → settlement" is a single continuous loop you can
+ * watch, instead of three unrelated widgets.
+ *
+ * The things that make a dot field read as a planet rather than a disc:
+ *   - axial tilt, so the poles are not on the frame edge
+ *   - back-hemisphere culling with a limb fade
+ *   - a terminator: dots are lit by a fixed light, so one side falls into night
+ *   - an atmosphere rim just outside the limb
+ *   - a graticule that curves with the rotation
+ * The orbit ring is depth-sorted against the sphere, so its far side passes
+ * behind the planet instead of over it.
  */
 interface Props {
-  /** visual weight of the whole layer */
   density?: "low" | "normal";
-  /** drop the travelling pulses where a section already carries motion */
+  /** run agents, matches and settlements */
   packets?: boolean;
-  /** horizontal centre as a fraction of the container, for composition */
+  /** horizontal centre as a fraction of the container */
   x?: number;
   /** radius as a fraction of the smaller container dimension */
   scale?: number;
 }
-const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.props;
+const { density = "normal", packets = true, x = 0.5, scale = 0.34 } = Astro.props;
 ---
 
 <div
@@ -49,10 +52,10 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.95;
+    opacity: 1;
   }
   .globe.low {
-    opacity: 0.55;
+    opacity: 0.6;
   }
   canvas {
     display: block;
@@ -60,10 +63,10 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
     height: 100%;
   }
   :global(html[data-theme="light"]) .globe {
-    opacity: 0.6;
+    opacity: 0.62;
   }
   :global(html[data-theme="light"]) .globe.low {
-    opacity: 0.35;
+    opacity: 0.38;
   }
 </style>
 
@@ -75,13 +78,19 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var lowPower = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
     var RAD = Math.PI / 180;
+    var TILT = -19 * RAD; // axial tilt: poles off the frame edge
+    var LIGHT = (function () {
+      var v = [-0.55, 0.42, 0.72];
+      var m = Math.hypot(v[0], v[1], v[2]);
+      return [v[0] / m, v[1] / m, v[2] / m];
+    })();
 
     roots.forEach(function (root) {
       var canvas = root.querySelector("[data-globe-canvas]");
       var ctx = canvas.getContext("2d");
       var wantPulses = root.getAttribute("data-packets") === "1";
       var xFrac = parseFloat(root.getAttribute("data-x")) || 0.5;
-      var scaleFrac = parseFloat(root.getAttribute("data-scale")) || 0.46;
+      var scaleFrac = parseFloat(root.getAttribute("data-scale")) || 0.34;
 
       var css = getComputedStyle(root);
       function tok(n, fb) {
@@ -97,39 +106,47 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
         return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
       }
 
-      /* ------------------------------------------------ sphere maths ---- */
-      function toVec(lat, lon) {
+      /* -------------------------------------------------- sphere maths -- */
+      function vec(lat, lon) {
         var la = lat * RAD, lo = lon * RAD, cl = Math.cos(la);
         return [cl * Math.sin(lo), Math.sin(la), cl * Math.cos(lo)];
       }
-      function toLatLon(v) {
-        return {
-          lat: Math.asin(Math.max(-1, Math.min(1, v[1]))) / RAD,
-          lon: Math.atan2(v[0], v[2]) / RAD,
-        };
-      }
-      // great-circle interpolation, so an arc follows the surface
       function slerp(a, b, t) {
-        var dot = Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
-        var om = Math.acos(dot);
+        var d = Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+        var om = Math.acos(d);
         if (om < 1e-6) return a.slice();
-        var s = Math.sin(om);
-        var k1 = Math.sin((1 - t) * om) / s, k2 = Math.sin(t * om) / s;
+        var s = Math.sin(om), k1 = Math.sin((1 - t) * om) / s, k2 = Math.sin(t * om) / s;
         return [a[0] * k1 + b[0] * k2, a[1] * k1 + b[1] * k2, a[2] * k1 + b[2] * k2];
       }
+      // spin about the polar axis, then tilt the axis toward the viewer
+      function view(v) {
+        var c = Math.cos(spin), s = Math.sin(spin);
+        var x1 = v[0] * c + v[2] * s;
+        var z1 = -v[0] * s + v[2] * c;
+        var y1 = v[1];
+        var ct = Math.cos(TILT), st = Math.sin(TILT);
+        return [x1, y1 * ct - z1 * st, y1 * st + z1 * ct];
+      }
 
-      var W = 0, H = 0, dpr = 1, cx = 0, cy = 0, R = 0;
-      var spin = 0, land = [], sites = [], arcs = [], pulses = [];
-      var raf = 0, last = 0, visible = true, spawnIn = 0.5;
+      var W = 0, H = 0, cx = 0, cy = 0, R = 0;
+      var spin = 0, orbitPhase = 0;
+      var land = [], sites = [], arenas = [], flights = [], settles = [], stars = [];
+      var last = 0, visible = true, spawnIn = 0.6;
 
-      function project(lat, lon, lift) {
-        var la = lat * RAD, lo = (lon + spin) * RAD, cl = Math.cos(la);
-        var r = R * (lift || 1);
-        return {
-          x: cx + cl * Math.sin(lo) * r,
-          y: cy - Math.sin(la) * r,
-          z: cl * Math.cos(lo), // > 0 means facing us
-        };
+      function toScreen(v, r) {
+        return { x: cx + v[0] * R * r, y: cy - v[1] * R * r, z: v[2] };
+      }
+
+      var ORBIT_R = 1.28;
+      var ORBIT_INC = 26 * RAD;
+      function orbitVec(theta) {
+        // a circle inclined about the X axis, independent of the planet's spin
+        var t = theta + orbitPhase;
+        var x = Math.cos(t);
+        var y = Math.sin(t) * Math.sin(ORBIT_INC);
+        var z = Math.sin(t) * Math.cos(ORBIT_INC);
+        var ct = Math.cos(TILT), st = Math.sin(TILT);
+        return [x, y * ct - z * st, y * st + z * ct];
       }
 
       function build() {
@@ -139,219 +156,313 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
           var lat = 90 - row.r * 5 - 2.5;
           for (var s = 0; s < row.s.length; s++) {
             for (var c = row.s[s][0]; c <= row.s[s][1]; c++) {
-              land.push({ lat: lat, lon: -180 + c * 5 + 2.5 });
+              land.push(vec(lat, -180 + c * 5 + 2.5));
             }
           }
         }
-
         sites = REGIONS.map(function (rg) {
-          return { lat: rg.lat, lon: rg.lon, flash: 0, pulse: Math.random() * 6.28 };
+          return { v: vec(rg.lat, rg.lon), id: rg.id, flash: 0, breathe: Math.random() * 6.28 };
         });
+        // three arenas riding the ring — the games, above any one region
+        arenas = [0, 2.09, 4.19].map(function (th) {
+          return { th: th, flare: 0 };
+        });
+        flights = [];
+        settles = [];
+        seedStars();
+      }
 
-        // arcs between region pairs, slerped and lifted off the surface
-        arcs = [];
-        var pairs = lowPower ? 6 : 13;
-        for (var p = 0; p < pairs; p++) {
-          var a = Math.floor(Math.random() * sites.length);
-          var b = Math.floor(Math.random() * sites.length);
-          if (a === b) b = (b + 1) % sites.length;
-          var va = toVec(sites[a].lat, sites[a].lon);
-          var vb = toVec(sites[b].lat, sites[b].lon);
-          var pts = [];
-          var STEPS = 26;
-          for (var k = 0; k <= STEPS; k++) {
-            var t = k / STEPS;
-            var ll = toLatLon(slerp(va, vb, t));
-            pts.push({ lat: ll.lat, lon: ll.lon, lift: 1 + 0.17 * Math.sin(Math.PI * t) });
-          }
-          arcs.push({ pts: pts, to: b });
+      // the only part of the scene that depends on the container size
+      function seedStars() {
+        stars = [];
+        for (var k = 0; k < 60; k++) {
+          stars.push({
+            x: Math.random() * W, y: Math.random() * H,
+            r: Math.random() * 1 + 0.25, a: Math.random() * 0.4 + 0.1,
+          });
         }
       }
 
       function layout() {
         var r = root.getBoundingClientRect();
         if (!r.width || !r.height) return false;
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var d = Math.min(window.devicePixelRatio || 1, 2);
         W = r.width;
         H = r.height;
-        canvas.width = Math.round(W * dpr);
-        canvas.height = Math.round(H * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        canvas.width = Math.round(W * d);
+        canvas.height = Math.round(H * d);
+        ctx.setTransform(d, 0, 0, d, 0, 0);
         cx = W * xFrac;
         cy = H * 0.5;
         R = Math.min(W, H) * scaleFrac;
         return true;
       }
 
-      function spawn() {
-        if (!arcs.length) return;
-        var a = arcs[Math.floor(Math.random() * arcs.length)];
-        pulses.push({ arc: a, t: 0, sp: 0.16 + Math.random() * 0.16 });
+      /* ------------------------------------------------------ pipeline -- */
+      function launch() {
+        if (!sites.length || !arenas.length) return;
+        var si = Math.floor(Math.random() * sites.length);
+        var ai = Math.floor(Math.random() * arenas.length);
+        flights.push({ si: si, ai: ai, t: 0, sp: 0.28 + Math.random() * 0.16 });
       }
 
       function step(dt) {
-        spin += dt * 2.6; // ~2.3 minutes a revolution
-        if (spin > 360) spin -= 360;
+        spin += dt * 0.052;
+        orbitPhase += dt * 0.1;
 
         if (wantPulses) {
           spawnIn -= dt;
-          if (spawnIn <= 0 && pulses.length < (lowPower ? 3 : 9)) {
-            spawn();
-            spawnIn = 0.4 + Math.random() * 0.7;
+          if (spawnIn <= 0 && flights.length < (lowPower ? 2 : 6)) {
+            launch();
+            spawnIn = 0.7 + Math.random() * 0.9;
           }
         }
-        for (var i = pulses.length - 1; i >= 0; i--) {
-          var pu = pulses[i];
-          pu.t += pu.sp * dt;
-          if (pu.t >= 1) {
-            sites[pu.arc.to].flash = 1; // it settled at the far end
-            pulses.splice(i, 1);
+
+        for (var i = flights.length - 1; i >= 0; i--) {
+          var f = flights[i];
+          f.t += f.sp * dt;
+          if (f.t >= 1) {
+            arenas[f.ai].flare = 1; // the match starts
+            settles.push({ si: f.si, ai: f.ai, t: 0, sp: 0.5 + Math.random() * 0.2, wait: 0.85 });
+            flights.splice(i, 1);
           }
         }
-        for (var s = 0; s < sites.length; s++) {
-          if (sites[s].flash > 0) sites[s].flash = Math.max(0, sites[s].flash - dt * 1.4);
+        for (var s = settles.length - 1; s >= 0; s--) {
+          var st = settles[s];
+          if (st.wait > 0) { st.wait -= dt; continue; }
+          st.t += st.sp * dt;
+          if (st.t >= 1) {
+            sites[st.si].flash = 1; // the payout lands back home
+            settles.splice(s, 1);
+          }
+        }
+        for (var a = 0; a < arenas.length; a++) {
+          if (arenas[a].flare > 0) arenas[a].flare = Math.max(0, arenas[a].flare - dt * 0.5);
+        }
+        for (var q = 0; q < sites.length; q++) {
+          if (sites[q].flash > 0) sites[q].flash = Math.max(0, sites[q].flash - dt * 1.3);
         }
       }
 
+      // a path from the surface out to the ring: direction slerps, radius lifts
+      function pathPoint(siteV, arenaTheta, t) {
+        var av = orbitVec(arenaTheta);
+        var dir = slerp(view(siteV), [av[0], av[1], av[2]], t);
+        var m = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+        dir = [dir[0] / m, dir[1] / m, dir[2] / m];
+        var r = 1 + (ORBIT_R - 1) * t + 0.1 * Math.sin(Math.PI * t);
+        return { v: dir, r: r };
+      }
+
+      /* ---------------------------------------------------------- draw -- */
       function draw(time) {
         ctx.clearRect(0, 0, W, H);
 
-        // the body of the sphere, so the dots sit on something
-        var g = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
-        g.addColorStop(0, rgba(AGENT, 0.16));
-        g.addColorStop(0.65, rgba(AGENT, 0.05));
-        g.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = g;
+        for (var s0 = 0; s0 < stars.length; s0++) {
+          var sr = stars[s0];
+          ctx.fillStyle = rgba(AGENT, sr.a * 0.5);
+          ctx.beginPath();
+          ctx.arc(sr.x, sr.y, sr.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // atmosphere: a rim just outside the limb, brightest where lit
+        var atmo = ctx.createRadialGradient(cx, cy, R * 0.94, cx, cy, R * 1.16);
+        atmo.addColorStop(0, rgba(AGENT, 0));
+        atmo.addColorStop(0.45, rgba(AGENT, 0.16));
+        atmo.addColorStop(1, rgba(AGENT, 0));
+        ctx.fillStyle = atmo;
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 1.16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // the body, lit from the same direction as the terminator
+        var body = ctx.createRadialGradient(
+          cx + LIGHT[0] * R * 0.5, cy - LIGHT[1] * R * 0.5, R * 0.05, cx, cy, R
+        );
+        body.addColorStop(0, rgba(AGENT, 0.14));
+        body.addColorStop(0.7, rgba(AGENT, 0.035));
+        body.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = body;
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.fill();
 
-        // limb
-        ctx.strokeStyle = rgba(AGENT, 0.34);
-        ctx.lineWidth = 1.1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
-        ctx.stroke();
+        // ---- orbit ring, far half first so the planet occludes it -------
+        function ringPass(farSide) {
+          ctx.beginPath();
+          var pen = false;
+          for (var i = 0; i <= 160; i++) {
+            var p = toScreen(orbitVec((i / 160) * Math.PI * 2), ORBIT_R);
+            var isFar = p.z < 0;
+            var hidden = isFar && Math.hypot(p.x - cx, p.y - cy) < R;
+            if (isFar !== farSide || hidden) { pen = false; continue; }
+            if (!pen) { ctx.moveTo(p.x, p.y); pen = true; } else ctx.lineTo(p.x, p.y);
+          }
+          ctx.strokeStyle = rgba(AGENT, farSide ? 0.14 : 0.4);
+          ctx.lineWidth = farSide ? 0.8 : 1.2;
+          ctx.stroke();
+        }
+        ringPass(true);
 
-        // graticule: a few meridians and parallels, which is what stops a dot
-        // field from reading as a flat scatter
+        // ---- graticule --------------------------------------------------
         ctx.lineWidth = 0.7;
+        ctx.strokeStyle = rgba(AGENT, 0.12);
         for (var mo = -180; mo < 180; mo += 30) {
           ctx.beginPath();
-          var penm = false;
-          for (var mlat = -80; mlat <= 80; mlat += 5) {
-            var mp = project(mlat, mo, 1);
-            if (mp.z <= 0.02) { penm = false; continue; }
-            if (!penm) { ctx.moveTo(mp.x, mp.y); penm = true; } else ctx.lineTo(mp.x, mp.y);
+          var pm = false;
+          for (var ml = -85; ml <= 85; ml += 5) {
+            var mp = toScreen(view(vec(ml, mo)), 1);
+            if (mp.z <= 0.015) { pm = false; continue; }
+            if (!pm) { ctx.moveTo(mp.x, mp.y); pm = true; } else ctx.lineTo(mp.x, mp.y);
           }
-          ctx.strokeStyle = rgba(AGENT, 0.13);
           ctx.stroke();
         }
         for (var pa = -60; pa <= 60; pa += 30) {
           ctx.beginPath();
-          var penp = false;
-          for (var plon = -180; plon <= 180; plon += 5) {
-            var pp2 = project(pa, plon, 1);
-            if (pp2.z <= 0.02) { penp = false; continue; }
-            if (!penp) { ctx.moveTo(pp2.x, pp2.y); penp = true; } else ctx.lineTo(pp2.x, pp2.y);
+          var pp = false;
+          for (var pl = -180; pl <= 180; pl += 5) {
+            var pt = toScreen(view(vec(pa, pl)), 1);
+            if (pt.z <= 0.015) { pp = false; continue; }
+            if (!pp) { ctx.moveTo(pt.x, pt.y); pp = true; } else ctx.lineTo(pt.x, pt.y);
           }
-          ctx.strokeStyle = rgba(AGENT, 0.13);
           ctx.stroke();
         }
 
-        // land — culled to the near hemisphere, fading toward the limb
-        for (var i = 0; i < land.length; i++) {
-          var p = project(land[i].lat, land[i].lon, 1);
-          if (p.z <= 0.02) continue;
-          var a = Math.min(1, p.z * 1.6);
-          ctx.fillStyle = rgba(AGENT, 0.62 * a);
+        // ---- land, lit by a fixed sun so one side falls into night ------
+        for (var i2 = 0; i2 < land.length; i2++) {
+          var lv = view(land[i2]);
+          if (lv[2] <= 0.02) continue;
+          var limb = Math.min(1, lv[2] * 1.9);
+          var lam = lv[0] * LIGHT[0] + lv[1] * LIGHT[1] + lv[2] * LIGHT[2];
+          var lit = 0.26 + 0.74 * Math.max(0, lam); // night side keeps a floor
+          var p2 = toScreen(lv, 1);
+          ctx.fillStyle = rgba(AGENT, 0.72 * limb * lit);
           ctx.beginPath();
-          ctx.arc(p.x, p.y, 1.75 * a + 0.4, 0, Math.PI * 2);
+          ctx.arc(p2.x, p2.y, 1.7 * limb + 0.35, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        // arcs
-        for (var k = 0; k < arcs.length; k++) {
-          var pts = arcs[k].pts;
-          ctx.beginPath();
-          var pen = false;
-          for (var q = 0; q < pts.length; q++) {
-            var pp = project(pts[q].lat, pts[q].lon, pts[q].lift);
-            if (pp.z <= -0.15) { pen = false; continue; }
-            if (!pen) { ctx.moveTo(pp.x, pp.y); pen = true; }
-            else ctx.lineTo(pp.x, pp.y);
+        // ---- data centres on the surface --------------------------------
+        for (var s2 = 0; s2 < sites.length; s2++) {
+          var stn = sites[s2];
+          var sv = view(stn.v);
+          if (sv[2] <= 0.04) continue;
+          var vis = Math.min(1, sv[2] * 2);
+          var sp2 = toScreen(sv, 1.012);
+          var live = stn.flash > 0;
+          var col = live ? SIGNAL : AGENT;
+          if (live) {
+            ctx.strokeStyle = rgba(SIGNAL, stn.flash * 0.7);
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            ctx.arc(sp2.x, sp2.y, 4 + (1 - stn.flash) * 26, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            var br = 0.5 + 0.5 * Math.sin(time / 760 + stn.breathe);
+            ctx.fillStyle = rgba(AGENT, (0.08 + br * 0.12) * vis);
+            ctx.beginPath();
+            ctx.arc(sp2.x, sp2.y, 7, 0, Math.PI * 2);
+            ctx.fill();
           }
-          ctx.strokeStyle = rgba(AGENT, 0.34);
-          ctx.lineWidth = 1.1;
+          ctx.save();
+          ctx.shadowColor = col;
+          ctx.shadowBlur = live ? 16 : 9;
+          ctx.fillStyle = rgba(col, (live ? 1 : 0.95) * vis);
+          ctx.fillRect(sp2.x - 2.7, sp2.y - 2.7, 5.4, 5.4);
+          ctx.restore();
+        }
+
+        // ---- agents climbing to a match ---------------------------------
+        function drawPath(siteV, th, from, to, col, width) {
+          ctx.beginPath();
+          var pen2 = false;
+          for (var k = from; k <= to + 1e-6; k += 0.035) {
+            var pr = pathPoint(siteV, th, Math.min(1, k));
+            var scr = toScreen(pr.v, pr.r);
+            var hidden = scr.z < 0 && Math.hypot(scr.x - cx, scr.y - cy) < R;
+            if (hidden) { pen2 = false; continue; }
+            if (!pen2) { ctx.moveTo(scr.x, scr.y); pen2 = true; } else ctx.lineTo(scr.x, scr.y);
+          }
+          ctx.strokeStyle = col;
+          ctx.lineWidth = width;
           ctx.stroke();
         }
 
-        // pulses riding the arcs
-        for (var m = 0; m < pulses.length; m++) {
-          var pu = pulses[m];
-          var pts2 = pu.arc.pts;
-          var idx = pu.t * (pts2.length - 1);
-          var from = Math.max(0, Math.floor(idx) - 5);
-          ctx.beginPath();
-          var pen2 = false;
-          for (var n = from; n <= idx; n++) {
-            var d = pts2[Math.min(pts2.length - 1, Math.floor(n))];
-            var dp = project(d.lat, d.lon, d.lift);
-            if (dp.z <= -0.1) { pen2 = false; continue; }
-            if (!pen2) { ctx.moveTo(dp.x, dp.y); pen2 = true; }
-            else ctx.lineTo(dp.x, dp.y);
-          }
-          ctx.strokeStyle = rgba(AGENT_HOT, 0.8);
-          ctx.lineWidth = 1.7;
-          ctx.stroke();
-
-          var hd = pts2[Math.min(pts2.length - 1, Math.round(idx))];
-          var hp = project(hd.lat, hd.lon, hd.lift);
-          if (hp.z > -0.1) {
+        for (var f2 = 0; f2 < flights.length; f2++) {
+          var fl = flights[f2];
+          var sv2 = sites[fl.si].v;
+          var th2 = arenas[fl.ai].th;
+          drawPath(sv2, th2, 0, fl.t, rgba(AGENT, 0.42), 1.2);
+          drawPath(sv2, th2, Math.max(0, fl.t - 0.24), fl.t, rgba(AGENT_HOT, 0.95), 2.4);
+          var hp = pathPoint(sv2, th2, fl.t);
+          var hs = toScreen(hp.v, hp.r);
+          if (!(hs.z < 0 && Math.hypot(hs.x - cx, hs.y - cy) < R)) {
             ctx.save();
-            ctx.shadowColor = SIGNAL;
-            ctx.shadowBlur = 12;
-            ctx.fillStyle = SIGNAL;
+            ctx.shadowColor = AGENT_HOT;
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = AGENT_HOT;
             ctx.beginPath();
-            ctx.arc(hp.x, hp.y, 2.4, 0, Math.PI * 2);
+            ctx.arc(hs.x, hs.y, 3.2, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
           }
         }
 
-        // data centres
-        for (var s = 0; s < sites.length; s++) {
-          var st = sites[s];
-          var sp = project(st.lat, st.lon, 1.01);
-          if (sp.z <= 0.03) continue;
-          var vis = Math.min(1, sp.z * 1.8);
-          var live = st.flash > 0;
-          var col = live ? SIGNAL : AGENT;
-
-          if (live) {
-            ctx.strokeStyle = rgba(SIGNAL, st.flash * 0.6);
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.arc(sp.x, sp.y, 4 + (1 - st.flash) * 22, 0, Math.PI * 2);
-            ctx.stroke();
-          } else {
-            // idle breathing, so a region is alive between connections
-            var bl = 0.5 + 0.5 * Math.sin(time / 700 + st.pulse);
-            ctx.fillStyle = rgba(AGENT, 0.1 * vis + bl * 0.12 * vis);
-            ctx.beginPath();
-            ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
+        // ---- payouts descending back to the region ----------------------
+        for (var g = 0; g < settles.length; g++) {
+          var se = settles[g];
+          if (se.wait > 0) continue;
+          var sv3 = sites[se.si].v;
+          var th3 = arenas[se.ai].th;
+          var back = 1 - se.t;
+          var bp = pathPoint(sv3, th3, back);
+          var bs = toScreen(bp.v, bp.r);
+          if (bs.z < 0 && Math.hypot(bs.x - cx, bs.y - cy) < R) continue;
           ctx.save();
-          ctx.shadowColor = col;
-          ctx.shadowBlur = live ? 14 : 8;
-          ctx.fillStyle = rgba(col, (live ? 1 : 0.9) * vis);
-          ctx.fillRect(sp.x - 2.6, sp.y - 2.6, 5.2, 5.2);
+          ctx.shadowColor = SIGNAL;
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = SIGNAL;
+          ctx.beginPath();
+          ctx.arc(bs.x, bs.y, 2.8, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
         }
+
+        // ---- arenas riding the ring -------------------------------------
+        for (var a2 = 0; a2 < arenas.length; a2++) {
+          var ar = arenas[a2];
+          var av2 = orbitVec(ar.th);
+          var as = toScreen(av2, ORBIT_R);
+          if (as.z < 0 && Math.hypot(as.x - cx, as.y - cy) < R) continue;
+          var hot = ar.flare > 0;
+          var acol = hot ? SIGNAL : AGENT;
+          if (hot) {
+            ctx.strokeStyle = rgba(SIGNAL, ar.flare * 0.65);
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.arc(as.x, as.y, 8 + (1 - ar.flare) * 30, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.save();
+          ctx.shadowColor = acol;
+          ctx.shadowBlur = hot ? 20 : 10;
+          ctx.strokeStyle = acol;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(as.x, as.y, 6.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = rgba(acol, hot ? 0.95 : 0.6);
+          ctx.beginPath();
+          ctx.arc(as.x, as.y, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        ringPass(false); // near half of the ring, over the planet
       }
 
+      /* ---------------------------------------------------------- boot -- */
       if (!layout()) {
         window.addEventListener("load", function () {
           if (layout()) { build(); draw(0); }
@@ -360,14 +471,25 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
       }
       build();
 
+      // Start mid-pipeline, always. An empty globe for the first two seconds
+      // reads as broken, and the seeded regions are chosen because they face
+      // the viewer at spin 0 — otherwise every arc is culled on arrival.
+      var seed = [3, 5, 6];
+      for (var i3 = 0; i3 < seed.length; i3++) {
+        flights.push({
+          si: seed[i3], ai: i3 % 3,
+          t: 0.3 + i3 * 0.2,
+          sp: reduced ? 0 : 0.28 + Math.random() * 0.14,
+        });
+      }
+      arenas[1].flare = 0.55;
+      sites[4].flash = 0.45;
+
       if (reduced) {
-        // one honest frame, with a few connections mid-flight
-        for (var i = 0; i < Math.min(3, arcs.length); i++) {
-          pulses.push({ arc: arcs[i], t: 0.35 + i * 0.15, sp: 0 });
-        }
+        settles.push({ si: 4, ai: 1, t: 0.45, sp: 0, wait: 0 });
         draw(0);
         window.addEventListener("resize", function () {
-          if (layout()) draw(0);
+          if (layout()) { seedStars(); draw(0); }
         }, { passive: true });
         return;
       }
@@ -376,7 +498,7 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
       if ("ResizeObserver" in window) {
         new ResizeObserver(function () {
           clearTimeout(rt);
-          rt = setTimeout(function () { layout(); }, 200);
+          rt = setTimeout(function () { if (layout()) seedStars(); }, 200);
         }).observe(root);
       }
       if ("IntersectionObserver" in window) {
@@ -389,7 +511,7 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
       });
 
       function frame(t) {
-        raf = requestAnimationFrame(frame);
+        requestAnimationFrame(frame);
         if (!visible) { last = t; return; }
         if (!last) last = t;
         var dt = Math.min((t - last) / 1000, 0.05);
@@ -397,7 +519,7 @@ const { density = "normal", packets = true, x = 0.5, scale = 0.46 } = Astro.prop
         step(dt);
         draw(t);
       }
-      raf = requestAnimationFrame(frame);
+      requestAnimationFrame(frame);
     });
   })();
 </script>

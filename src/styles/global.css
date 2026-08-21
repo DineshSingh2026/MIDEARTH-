@@ -350,6 +350,64 @@ html[data-theme="circuit"] {
   );
 }
 
+/* =============================== orbit theme ============================
+   The circuit family, pushed further: a truer black, a colder chrome and a
+   hotter emerald. Same formula — metal structure, one hue where the light is
+   — but with more separation between the two, which suits the globe's orbit
+   ring and its arena flares.
+   ======================================================================== */
+
+html[data-theme="orbit"] {
+  color-scheme: dark;
+
+  --color-void: #000205;
+  --color-deck: #04080b;
+  --color-deck-raise: #0a1015;
+  --color-deck-high: #10181e;
+  --color-glass: #081015;
+  --color-stands: #e7edec;
+  --color-stands-raise: #f2f7f6;
+  --color-stands-deep: #d2dbda;
+
+  --color-agent: #a8becb;
+  --color-agent-hot: #e0eef6;
+  --color-agent-deep: #4e6270;
+
+  --color-signal: #00ffa3;
+  --color-signal-hot: #8fffd1;
+  --color-signal-deep: #058c56;
+
+  --color-brand-blue: #6f93a6;
+  --color-brand-lime: #00ffc6;
+
+  --color-ink: #04080a;
+  --color-ink-dim: #4b585d;
+  --color-ink-faint: #7c8b90;
+  --color-paper: #dce9ee;
+  --color-paper-dim: #8797a0;
+  --color-paper-faint: #55656d;
+
+  --color-rule: #0f171c;
+  --color-rule-hot: #1b262d;
+  --color-rule-light: #c9d3d2;
+  --color-rule-light-hot: #aeb9b8;
+}
+
+html[data-theme="orbit"] {
+  --grad-brand: linear-gradient(
+    100deg,
+    var(--color-agent-deep),
+    var(--color-agent) 26%,
+    var(--color-signal) 74%,
+    var(--color-brand-lime)
+  );
+  --grad-brand-soft: linear-gradient(
+    100deg,
+    var(--color-agent) 4%,
+    var(--color-signal) 96%
+  );
+}
+
 /* ------------------------------- base ----------------------------------- */
 
 * {

@@ -150,23 +150,33 @@ screens, and that distinction is deliberate.
 - `.atmos-grid` — blueprint rule, masked to fade at the edges.
 - `.atmos-beam` — a soft diagonal sweep crossing the ground every 19 seconds. Long
   period on purpose: it should be noticed on second glance, not first.
-- `Globe.astro` — a slowly rotating globe carrying the real cloud regions, with
-  great-circle arcs running between them. It maps onto the product rather than
-  decorating it — **dotted land = the world (same `LAND` mask as the network map),
-  marker = a data centre at its real coordinates, arc = a connection, pulse = an agent
-  crossing to a match, flash = it settled at the far end.**
+- `Globe.astro` — the whole product on one sphere, and the reason it is one visual
+  rather than three widgets:
 
-  Orthographic projection with **back-hemisphere culling**: a point draws only when it
-  faces the viewer and fades toward the limb, which is what makes a flat dot field read
-  as a sphere. A graticule of meridians and parallels reinforces it — without those, dots
-  on a circle still read as a flat scatter. Arcs are **slerped** between endpoints and
-  lifted off the surface, so they curve over the horizon like flight paths rather than
-  cutting through the planet.
+  | on screen | what it is |
+  | --- | --- |
+  | dotted land | the world, from the same `LAND` mask the network map uses |
+  | surface marker | a **data centre** at its real coordinates |
+  | orbit ring | the **arenas** — above the world, not in any one region |
+  | ascending arc | an **agent** leaving its region for a match |
+  | arena flare | the **match** running |
+  | descending pulse | the **payout** settling back where the agent lives |
 
-  `x` positions the sphere horizontally (the hero pushes it right, so the copy column
-  stays clear) and `scale` sets its radius. Pauses offscreen and on hidden tabs; draws a
-  single static frame with connections mid-flight under reduced motion. Pass
-  `density="low"` and `packets={false}` where the section already carries motion.
+  What makes a dot field read as a planet rather than a disc: **axial tilt** so the poles
+  are off the frame edge, **back-hemisphere culling** with a limb fade, a **terminator**
+  (dots are lit by a fixed sun, so one side falls into night), an **atmosphere rim** just
+  outside the limb, and a **graticule** that curves with the rotation. Arcs are **slerped**
+  and lifted, so they bow over the horizon instead of cutting through the planet. The
+  orbit ring is **depth-sorted** against the sphere — its far half passes behind.
+
+  `ORBIT_R` is 1.28× the globe, so `scale` has to leave room for the ring or arenas and
+  arcs clip off the frame. It seeds two or three flights at load: an empty globe for the
+  first two seconds reads as broken.
+
+  **Do not rebuild the scene on resize.** Land, regions and arenas do not depend on
+  container size — only the starfield does. `ResizeObserver` fires on first observation,
+  so calling `build()` from it wiped every in-flight agent about 200ms after load, and
+  again on any resize. `seedStars()` exists to keep that boundary clear.
 
 Type: **Archivo** at expanded widths for display (scoreboard authority), **Instrument
 Sans** for body, **JetBrains Mono** for anything the machine says — endpoints, keys, pool
