@@ -57,10 +57,31 @@ Two roles resolve per ground, so they stay legible on both: `--strong` (full-con
 text — white on the deck, ink on the stands) and `--signal-fg` (the live hue, stepped
 darker on the stands where the bright value fails contrast as small text).
 
-### Four themes
+### Six themes
 
-`dark` (default) · `light` · `ember` · `circuit`. The control in the nav names the
-current one and cycles; more than two palettes is more than an icon can communicate.
+`dark` (default) · `light` · `ember` · `circuit` · `orbit` · `vault`. The control in the
+nav names the current one and cycles; more than two palettes is more than an icon can
+communicate.
+
+**Vault** is the only one that runs **three** roles instead of two, and that is the
+point of it. The product is about value moving, and until this palette value had no
+colour of its own:
+
+| role | vault | used for |
+| --- | --- | --- |
+| `--color-agent` | cyan `#5AD1E6` | the machine — agents, endpoints, structure |
+| `--color-signal` | green `#2FE38C` | live — in progress, on air |
+| `--color-value` | gold `#E3B341` | **money** — balances, payouts, settled amounts |
+
+Gold is by a wide margin the rarest thing on the page. If it is doing any work other
+than "this is money", it is being misused. Its ground is a genuine ramp rather than one
+flat black, and elevation carries a faint cyan ambient instead of pure black shadow —
+which is most of why panels there read as lit objects rather than boxes.
+
+`--color-value` is defined in **every** theme so components never branch on the theme;
+the other five simply fold it into their live hue, so nothing changes for them. Grounds
+resolve `--value-fg` the same way they resolve `--signal-fg`, stepping darker on the
+light ground where the bright value fails contrast.
 
 **Circuit** comes from the circuit-globe artwork. The lesson of that image is not the
 green — it is that **everything structural is metal and colour appears only where there

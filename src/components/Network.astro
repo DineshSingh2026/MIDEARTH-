@@ -411,19 +411,19 @@ const { compact = false } = Astro.props;
   .chain :global(.blk) {
     width: 20px;
     height: 20px;
-    border: 1px solid var(--color-signal);
-    background: color-mix(in srgb, var(--color-signal) 14%, transparent);
+    border: 1px solid var(--value-fg, var(--color-value));
+    background: color-mix(in srgb, var(--value-fg, var(--color-value)) 14%, transparent);
     flex: none;
     animation: blkin 0.5s var(--ease-spring);
   }
   .chain :global(.blk.new) {
-    background: color-mix(in srgb, var(--color-signal) 40%, transparent);
-    box-shadow: 0 0 14px color-mix(in srgb, var(--color-signal) 80%, transparent);
+    background: color-mix(in srgb, var(--value-fg, var(--color-value)) 40%, transparent);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--value-fg, var(--color-value)) 80%, transparent);
   }
   .chain :global(.lnk) {
     width: 12px;
     height: 1px;
-    background: var(--color-signal);
+    background: var(--value-fg, var(--color-value));
     opacity: 0.5;
     flex: none;
   }
@@ -459,7 +459,7 @@ const { compact = false } = Astro.props;
     animation: agin 0.45s var(--ease-out);
   }
   .ledger :global(.row b) {
-    color: var(--color-signal);
+    color: var(--value-fg, var(--color-value));
     font-weight: 400;
   }
   .ledger :global(.row .h) {

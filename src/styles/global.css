@@ -39,6 +39,14 @@
   --color-brand-blue: #0177be;
   --color-brand-lime: #9cf216;
 
+  /* -- value ---------------------------------------------------------
+     A third role for money: balances, payouts, settled amounts. Most
+     palettes fold it into the live hue, because two hues is already a
+     lot. `vault` is the one that separates them — see its block. */
+  --color-value: #35e084;
+  --color-value-hot: #86f3b4;
+  --color-value-deep: #12904c;
+
   /* -- type ------------------------------------------------------- */
   --color-ink: #0b1013;
   --color-ink-dim: #4e5a5c;
@@ -165,6 +173,10 @@ html[data-theme="light"] {
   --glow-signal:
     0 0 0 1px color-mix(in srgb, var(--color-signal) 26%, transparent),
     0 12px 28px -14px color-mix(in srgb, var(--color-signal) 50%, transparent);
+
+  --color-value: #0f8a4a;
+  --color-value-hot: #0a6335;
+  --color-value-deep: #7fd3a4;
 }
 
 html[data-theme="dark"] {
@@ -255,6 +267,10 @@ html[data-theme="ember"] {
   --color-rule-hot: #262a34;
   --color-rule-light: #cfccc5;
   --color-rule-light-hot: #b7b3aa;
+
+  --color-value: #f44e04;
+  --color-value-hot: #ff8038;
+  --color-value-deep: #8f2a00;
 }
 
 /* Blue and orange are opposite hues, so a gradient between them interpolates
@@ -332,6 +348,10 @@ html[data-theme="circuit"] {
   --color-rule-hot: #1e282e;
   --color-rule-light: #cbd4d3;
   --color-rule-light-hot: #b0bab9;
+
+  --color-value: #00e58c;
+  --color-value-hot: #6bffc2;
+  --color-value-deep: #067a4b;
 }
 
 /* Chrome lighting up into emerald — the traces on the globe, as a ramp. */
@@ -391,6 +411,10 @@ html[data-theme="orbit"] {
   --color-rule-hot: #1b262d;
   --color-rule-light: #c9d3d2;
   --color-rule-light-hot: #aeb9b8;
+
+  --color-value: #00ffa3;
+  --color-value-hot: #8fffd1;
+  --color-value-deep: #058c56;
 }
 
 html[data-theme="orbit"] {
@@ -406,6 +430,96 @@ html[data-theme="orbit"] {
     var(--color-agent) 4%,
     var(--color-signal) 96%
   );
+}
+
+/* =============================== vault theme ============================
+   The palette the money story actually needs.
+
+   Every other theme runs two roles — the machine, and whatever is live. This
+   one runs three, because the product is about value moving and value had no
+   colour of its own:
+
+     cyan   the machine        agents, endpoints, structure
+     green  live               in progress, on air
+     gold   value              balances, payouts, settled amounts
+
+   Gold is the rarest thing on the page by a wide margin. If it is doing any
+   work other than "this is money", it is being misused.
+
+   The ground is a genuine ramp rather than one flat black, and elevation
+   carries a faint cyan ambient instead of pure black shadow — which is most
+   of why panels here read as lit objects rather than boxes.
+   ======================================================================== */
+
+html[data-theme="vault"] {
+  color-scheme: dark;
+
+  --color-void: #03060a;
+  --color-deck: #060b10;
+  --color-deck-raise: #0b131a;
+  --color-deck-high: #121c25;
+  --color-glass: #0a121a;
+  --color-stands: #e8edec;
+  --color-stands-raise: #f4f7f6;
+  --color-stands-deep: #d3dad8;
+
+  --color-agent: #5ad1e6;
+  --color-agent-hot: #a6ecf7;
+  --color-agent-deep: #1d6c7e;
+
+  --color-signal: #2fe38c;
+  --color-signal-hot: #86f5be;
+  --color-signal-deep: #0e8a52;
+
+  --color-value: #e3b341;
+  --color-value-hot: #f6d183;
+  --color-value-deep: #8a6613;
+
+  --color-brand-blue: #1f7fd0;
+  --color-brand-lime: #e3b341;
+
+  --color-ink: #061014;
+  --color-ink-dim: #4a5a5f;
+  --color-ink-faint: #7d8d91;
+  --color-paper: #e6f0f3;
+  --color-paper-dim: #93a6ae;
+  --color-paper-faint: #5d7078;
+
+  --color-rule: #14202a;
+  --color-rule-hot: #203040;
+  --color-rule-light: #c8d2d0;
+  --color-rule-light-hot: #adb8b6;
+
+  /* elevation with a cyan ambient — pure black shadow on near-black ground
+     reads as a smudge, this reads as light falling off an edge */
+  --shadow-panel:
+    0 1px 0 0 rgba(166, 236, 247, 0.055) inset,
+    0 26px 60px -34px rgba(0, 0, 0, 0.95),
+    0 0 44px -30px rgba(90, 209, 230, 0.42);
+  --shadow-lift:
+    0 1px 0 0 rgba(166, 236, 247, 0.07) inset,
+    0 42px 84px -42px rgba(0, 0, 0, 1),
+    0 0 60px -32px rgba(90, 209, 230, 0.5);
+
+  /* the mark's ramp, carried through to where the money is */
+  --grad-brand: linear-gradient(
+    100deg,
+    var(--color-brand-blue),
+    var(--color-agent) 30%,
+    var(--color-signal) 66%,
+    var(--color-value)
+  );
+  --grad-brand-soft: linear-gradient(
+    100deg,
+    var(--color-agent) 6%,
+    var(--color-signal) 58%,
+    var(--color-value) 100%
+  );
+}
+
+/* value, wherever a component asks for it */
+.val {
+  color: var(--value-fg, var(--color-value));
 }
 
 /* ------------------------------- base ----------------------------------- */
@@ -796,6 +910,7 @@ html[data-theme="light"] .atmos-beam {
   --raise: var(--color-deck-raise);
   --strong: var(--color-agent-hot);
   --signal-fg: var(--color-signal);
+  --value-fg: var(--color-value);
 }
 
 .ground-void {
@@ -808,6 +923,7 @@ html[data-theme="light"] .atmos-beam {
   --raise: var(--color-deck);
   --strong: var(--color-agent-hot);
   --signal-fg: var(--color-signal);
+  --value-fg: var(--color-value);
 }
 
 .ground-stands {
@@ -820,6 +936,7 @@ html[data-theme="light"] .atmos-beam {
   --raise: var(--color-stands-raise);
   --strong: var(--color-ink);
   --signal-fg: var(--color-signal-deep);
+  --value-fg: var(--color-value-deep);
 }
 
 .dim {
